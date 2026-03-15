@@ -5,6 +5,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
          collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove }
                                                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
   authDomain: "wavarchive-73dfb.firebaseapp.com",
