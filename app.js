@@ -111,7 +111,7 @@ function trackCard(t) {
   <div class="tcard${isNow?' now':''}" id="card-${t.id}" onclick="openTrack('${t.id}')">
     <div class="tcard-img">
       ${img}
-      <div class="tcard-overlay">
+      <div class="tcard-overlay" onclick="event.stopPropagation();playById('${t.id}')">
         <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
       </div>
     </div>
@@ -655,16 +655,16 @@ async function loadUserData(user) {
   renderAll();
 }
 
-window.addEventListener('fb-ready', () => {
-  fb = window._fb;
+function initApp(fbInstance) {
+  fb = fbInstance;
   let firstAuth = true;
   fb.onAuthStateChanged(fb.auth, async user => {
     currentUser = user;
     if (user) {
       renderAuthArea();
       if (firstAuth) {
-        toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
         firstAuth = false;
+        toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
       }
       loadUserData(user);
     } else {
@@ -675,7 +675,11 @@ window.addEventListener('fb-ready', () => {
     }
   });
   loadTracks();
-});
+}
+
+window.addEventListener('fb-ready', () => initApp(window._fb));
+
+if (window._fb) initApp(window._fb);
 
 function renderAuthArea() {
   const el = document.getElementById('auth-area');
