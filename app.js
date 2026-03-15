@@ -1,5 +1,5 @@
-const GH_OWNER  = 'artevhr';
-const GH_REPO   = 'wavarchive-music';
+const GH_OWNER  = 'YOUR_GITHUB_USERNAME';
+const GH_REPO   = 'YOUR_MUSIC_REPO';
 const GH_BRANCH = 'main';
 const RAW        = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 const TRACKS_URL = `${RAW}/tracks.json`;
@@ -55,7 +55,7 @@ async function loadTracks() {
     if (!Array.isArray(tracks)) throw new Error('Неверный формат tracks.json');
   } catch (e) {
     tracks = [];
-    const msg = GH_OWNER === 'artevhr'
+    const msg = GH_OWNER === 'YOUR_GITHUB_USERNAME'
       ? 'Настрой GH_OWNER и GH_REPO в коде сайта'
       : `Не удалось загрузить треки: ${e.message}`;
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
@@ -657,18 +657,24 @@ async function loadUserData(user) {
 
 window.addEventListener('fb-ready', () => {
   fb = window._fb;
+  let firstAuth = true;
   fb.onAuthStateChanged(fb.auth, async user => {
     currentUser = user;
     if (user) {
-      await loadUserData(user);
-      toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
+      renderAuthArea();
+      loadUserData(user).then(() => {
+        if (firstAuth) {
+          toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
+          firstAuth = false;
+        }
+      });
     } else {
       userLikes     = [];
       userPlaylists = [];
+      firstAuth = false;
       renderAll();
     }
   });
-  
   loadTracks();
 });
 
@@ -682,7 +688,7 @@ function renderAuthArea() {
         <div class="user-chip" id="user-chip" onclick="toggleUserMenu()">
           <div class="user-avatar">${ini}</div>
           <span class="user-chip-name">${esc(name)}</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="chip-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           <div class="dropdown" id="user-dd">
             <div class="dd-item" onclick="nav('profile');closeUserMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</div>
             <div class="dd-item" onclick="nav('liked');closeUserMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Понравилось</div>
