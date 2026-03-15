@@ -244,9 +244,10 @@ function openCreatePl() {
 async function createPlaylist() {
   const name = document.getElementById('pl-inp-name').value.trim();
   if (!name) { toast('Введи название', true); return; }
-  const { db, collection, addDoc } = fb;
+  const { db, collection, addDoc, doc, setDoc } = fb;
+  await setDoc(doc(db, 'users', uid()), { uid: uid() }, { merge: true }).catch(()=>{});
   const pl = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
-  const ref = await addDoc(collection(db, 'playlists'), pl).catch(e => { toast('Ошибка: ' + e.message, true); return null; });
+  const ref = await addDoc(collection(db, 'playlists'), pl).catch(e => { toast('Ошибка: ' + e.message, true); console.error(e); return null; });
   if (!ref) return;
   pl.id = ref.id;
   userPlaylists.push(pl);
@@ -473,16 +474,16 @@ function toggleLikePlayer(){
 
 async function toggleLike(id) {
   if (!uid()) { openAuth(); return; }
-  const { db, doc, updateDoc, arrayUnion, arrayRemove } = fb;
+  const { db, doc, setDoc, arrayUnion, arrayRemove } = fb;
   const has = userLikes.includes(id);
   const ref = doc(db, 'users', uid());
   if (has) {
     userLikes = userLikes.filter(x => x !== id);
-    await updateDoc(ref, { likes: arrayRemove(id) }).catch(()=>{});
+    await setDoc(ref, { likes: arrayRemove(id) }, { merge: true }).catch(e => console.error('like err:', e));
     toast('Убрано из понравившихся');
   } else {
     userLikes = [...userLikes, id];
-    await updateDoc(ref, { likes: arrayUnion(id) }).catch(()=>{});
+    await setDoc(ref, { likes: arrayUnion(id) }, { merge: true }).catch(e => console.error('like err:', e));
     toast('❤ Добавлено в понравившееся');
   }
   refreshLikeUI(id, !has);
