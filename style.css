@@ -635,8 +635,8 @@ textarea.form-input{resize:vertical;min-height:72px;}
 
   .app{
     grid-template-columns:1fr;
-    grid-template-rows:48px 1fr var(--ph);
-    grid-template-areas:"topbar" "content" "player";
+    grid-template-rows:48px 1fr;
+    grid-template-areas:"topbar" "content";
   }
   .sidebar{display:none;}
 
@@ -673,25 +673,40 @@ textarea.form-input{resize:vertical;min-height:72px;}
   .trow-img img{width:40px;height:40px;}
   .trow-right{gap:6px;padding-right:10px;}
 
-  .player{grid-template-columns:1fr auto;padding:0 12px;gap:10px;position:relative;}
+  .player{
+    position:fixed;
+    bottom:56px;
+    left:0;right:0;
+    height:64px;
+    grid-area:unset;
+    grid-template-columns:1fr auto;
+    padding:0 12px;
+    gap:10px;
+    z-index:50;
+    border-top:1px solid var(--c-border);
+    background:var(--c-surf);
+  }
   .pl-center{display:none;}
   .pl-right{display:none;}
-  .pl-art{width:38px;height:38px;font-size:14px;}
-  .pl-art img{width:38px;height:38px;}
-  .pl-name{font-size:11px;}
+  .pl-art{width:40px;height:40px;font-size:16px;flex-shrink:0;}
+  .pl-art img{width:40px;height:40px;}
+  .pl-name{font-size:12px;}
+  .pl-by{font-size:10px;}
   .pl-heart svg{width:15px;height:15px;}
 
   .mob-pl-btns{display:flex;align-items:center;gap:4px;flex-shrink:0;}
-  .mob-pl-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;color:var(--c-muted2);}
-  .mob-pl-btn svg{width:15px;height:15px;}
+  .mob-pl-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--c-muted2);}
+  .mob-pl-btn svg{width:16px;height:16px;}
   .mob-pl-play{
-    width:34px;height:34px;border-radius:50%;
+    width:36px;height:36px;border-radius:50%;
     background:var(--c-acc);color:#000;
     display:flex;align-items:center;justify-content:center;
   }
-  .mob-pl-play svg{width:13px;height:13px;}
+  .mob-pl-play svg{width:14px;height:14px;}
   .mob-prog-line{position:absolute;top:0;left:0;right:0;height:2px;background:var(--c-border);}
   .mob-prog-fill{height:2px;background:var(--c-acc);width:0%;transition:width .4s linear;}
+
+  .content{padding-bottom:calc(64px + 56px + 16px);}
 
   .mob-nav{display:grid;}
 
