@@ -1,5 +1,5 @@
-const GH_OWNER  = 'YOUR_GITHUB_USERNAME';
-const GH_REPO   = 'YOUR_MUSIC_REPO';
+const GH_OWNER  = 'artevhr';
+const GH_REPO   = 'wavarchive-music';
 const GH_BRANCH = 'main';
 const RAW        = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 const TRACKS_URL = `${RAW}/tracks.json`;
@@ -662,12 +662,11 @@ window.addEventListener('fb-ready', () => {
     currentUser = user;
     if (user) {
       renderAuthArea();
-      loadUserData(user).then(() => {
-        if (firstAuth) {
-          toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
-          firstAuth = false;
-        }
-      });
+      if (firstAuth) {
+        toast(`✓ Добро пожаловать, ${user.displayName || user.email}!`);
+        firstAuth = false;
+      }
+      loadUserData(user);
     } else {
       userLikes     = [];
       userPlaylists = [];
