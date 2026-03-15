@@ -1,5 +1,5 @@
-const GH_OWNER  = 'YOUR_GITHUB_USERNAME';
-const GH_REPO   = 'YOUR_MUSIC_REPO';
+const GH_OWNER  = 'artevhr';
+const GH_REPO   = 'wavarchive-music';
 const GH_BRANCH = 'main';
 const RAW        = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 const TRACKS_URL = `${RAW}/tracks.json`;
@@ -55,7 +55,7 @@ async function loadTracks() {
     if (!Array.isArray(tracks)) throw new Error('Неверный формат tracks.json');
   } catch (e) {
     tracks = [];
-    const msg = GH_OWNER === 'YOUR_GITHUB_USERNAME'
+    const msg = GH_OWNER === 'artevhr'
       ? 'Настрой GH_OWNER и GH_REPO в коде сайта'
       : `Не удалось загрузить треки: ${e.message}`;
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
