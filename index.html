@@ -393,7 +393,7 @@ async function loadTracks() {
     if (!Array.isArray(tracks)) throw new Error('Неверный формат tracks.json');
   } catch (e) {
     tracks = [];
-    const msg = GH_OWNER === 'YOUR_GITHUB_USERNAME'
+    const msg = GH_OWNER === 'artevhr'
       ? 'Настрой GH_OWNER и GH_REPO в коде сайта'
       : `Не удалось загрузить треки: ${e.message}`;
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
