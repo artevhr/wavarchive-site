@@ -11,6 +11,7 @@ let userPlaylists = [];
 let fb           = null;   
 
 let queueTracks  = [];
+let isWave       = false;
 let queueIdx     = -1;
 let isPlaying    = false;
 let isShuffle    = false;
@@ -320,6 +321,7 @@ function goBackFromTrack() { nav(prevPage); }
 function playById(id) {
   const t = tracks.find(x=>x.id===id);
   if (!t) return;
+  stopWave();
   queueTracks = [...tracks];
   queueIdx = queueTracks.findIndex(x=>x.id===id);
   startPlay();
@@ -404,7 +406,12 @@ function nextTrack() {
   if (isShuffle && shuffleOrder.length) {
     const pos=shuffleOrder.indexOf(queueIdx);
     ni=shuffleOrder[(pos+1)%shuffleOrder.length];
-  } else { ni=(queueIdx+1)%queueTracks.length; }
+    queueIdx=ni; startPlay(); return;
+  }
+  ni = queueIdx + 1;
+  if (ni >= queueTracks.length) {
+    startWaveAuto(); return;
+  }
   queueIdx=ni; startPlay();
 }
 function prevTrack() {
@@ -680,6 +687,34 @@ function initApp(fbInstance) {
 window.addEventListener('fb-ready', () => initApp(window._fb));
 
 if (window._fb) initApp(window._fb);
+
+function startWave() {
+  if (!tracks.length) { toast('Нет треков для волны', true); return; }
+  const pool = [...tracks].sort(() => Math.random() - 0.5);
+  queueTracks = pool;
+  queueIdx = 0;
+  isWave = true;
+  startPlay();
+  toast('〰 Волна запущена');
+  document.querySelectorAll('.nav-wave').forEach(b => b.classList.add('active'));
+  document.querySelectorAll('.mob-nav-btn[onclick*="startWave"]').forEach(b => b.classList.add('active'));
+}
+
+function startWaveAuto() {
+  if (!tracks.length) return;
+  const pool = [...tracks].sort(() => Math.random() - 0.5);
+  queueTracks = pool;
+  queueIdx = 0;
+  isWave = true;
+  startPlay();
+  toast('〰 Волна — рандомные треки');
+}
+
+function stopWave() {
+  isWave = false;
+  document.querySelectorAll('.nav-wave').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mob-nav-btn[onclick*="startWave"]').forEach(b => b.classList.remove('active'));
+}
 
 function renderAuthArea() {
   const el = document.getElementById('auth-area');

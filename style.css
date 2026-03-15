@@ -721,3 +721,16 @@ textarea.form-input{resize:vertical;min-height:72px;}
   .mob-nav{display:none !important;}
   .mob-search-overlay{display:none !important;}
 }
+
+.nav-wave.active{
+  color:var(--c-acc);
+  border-left-color:var(--c-acc);
+  background:var(--c-surf);
+}
+.nav-wave.active svg{
+  animation:wave-anim 1.2s ease-in-out infinite;
+}
+@keyframes wave-anim{
+  0%,100%{transform:scaleY(1);}
+  50%{transform:scaleY(1.3);}
+}

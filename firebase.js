@@ -5,15 +5,13 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
          collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove }
                                                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
-  authDomain: "wavarchive-73dfb.firebaseapp.com",
-  projectId: "wavarchive-73dfb",
-  storageBucket: "wavarchive-73dfb.firebasestorage.app",
-  messagingSenderId: "803800269262",
-  appId: "1:803800269262:web:d274f1c0169b210a4b2b9f",
-  measurementId: "G-H0M5239XVK"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 
 const app  = initializeApp(firebaseConfig);
