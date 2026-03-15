@@ -308,17 +308,14 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
          collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove }
                                                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-/* ──────────────────────────────────────────────────────────────
-   🔥 ВСТАВЬ СВОЙ КОНФИГ FIREBASE СЮДА
-   console.firebase.google.com → Project Settings → Your apps → SDK snippet
-────────────────────────────────────────────────────────────── */
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
+  authDomain: "wavarchive-73dfb.firebaseapp.com",
+  projectId: "wavarchive-73dfb",
+  storageBucket: "wavarchive-73dfb.firebasestorage.app",
+  messagingSenderId: "803800269262",
+  appId: "1:803800269262:web:d274f1c0169b210a4b2b9f",
+  measurementId: "G-H0M5239XVK"
 };
 
 const app  = initializeApp(firebaseConfig);
@@ -338,8 +335,8 @@ window.dispatchEvent(new Event('fb-ready'));
 /* ────────────────────────────────────────────────────────────────
    CONFIG — замени на свой GitHub репо с треками
 ──────────────────────────────────────────────────────────────── */
-const GH_OWNER  = 'YOUR_GITHUB_USERNAME';
-const GH_REPO   = 'YOUR_MUSIC_REPO';
+const GH_OWNER  = 'artevhr';
+const GH_REPO   = 'wavarchive-music';
 const GH_BRANCH = 'main';
 const RAW        = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 const TRACKS_URL = `${RAW}/tracks.json`;
