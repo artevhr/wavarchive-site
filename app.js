@@ -301,7 +301,7 @@ async function createPlaylist() {
   if (!name) { toast('Введи название', true); return; }
   await setDoc(doc(db, 'users', uid()), { uid: uid() }, { merge: true }).catch(() => {});
   const pl  = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
-  const ref = await addDoc(collection(db, 'playlists'), pl).catch(e => { toast('Ошибка: ' + e.message, true); return null; });
+  const ref = await addDoc(collection(db, 'playlists'), pl).catch(e => { console.error('createPlaylist:', e); toast('Ошибка: ' + e.message, true); return null; });
   if (!ref) return;
   pl.id = ref.id;
   userPlaylists.push(pl);
@@ -651,11 +651,10 @@ function closeFullPlayer() {
 function openCtxPlayer() {
   const t = queueTracks[queueIdx];
   if (!t) return;
-  // Создаём фиктивный элемент в центре экрана для позиционирования меню
   const fakeBtn = {
     getBoundingClientRect: () => ({
-      bottom: window.innerHeight / 2,
-      left: window.innerWidth / 2 - 95
+      bottom: window.innerHeight - 180,
+      left: Math.max(8, window.innerWidth / 2 - 95)
     })
   };
   openCtx(t.id, fakeBtn);
@@ -784,13 +783,13 @@ async function addToPlaylist(plId) {
   const pl = userPlaylists.find(p => p.id === plId);
   if (!pl || pl.tracks.includes(ctxTargetId)) { toast('Уже в этом плейлисте'); return; }
   pl.tracks.push(ctxTargetId);
-  await updateDoc(doc(db, 'playlists', plId), { tracks: arrayUnion(ctxTargetId) }).catch(() => {});
+  await updateDoc(doc(db, 'playlists', plId), { tracks: arrayUnion(ctxTargetId) }).catch(e => console.error('addToPlaylist:', e));
   toast(`✓ Добавлено в «${pl.name}»`);
   renderPlaylists();
 }
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('.ctx-menu') && !e.target.closest('.act-btn.add') && !e.target.closest('.btn[onclick*="openCtx"]')) closeCtx();
+  if (!e.target.closest('.ctx-menu') && !e.target.closest('.act-btn.add') && !e.target.closest('.btn[onclick*="openCtx"]') && !e.target.closest('.fp-more')) closeCtx();
 });
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
