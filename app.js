@@ -2,15 +2,14 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
-  authDomain: "wavarchive-73dfb.firebaseapp.com",
-  projectId: "wavarchive-73dfb",
-  storageBucket: "wavarchive-73dfb.firebasestorage.app",
+  apiKey:            "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
+  authDomain:        "wavarchive-73dfb.firebaseapp.com",
+  projectId:         "wavarchive-73dfb",
+  storageBucket:     "wavarchive-73dfb.firebasestorage.app",
   messagingSenderId: "803800269262",
-  appId: "1:803800269262:web:d274f1c0169b210a4b2b9f",
-  measurementId: "G-H0M5239XVK"
+  appId:             "1:803800269262:web:d274f1c0169b210a4b2b9f",
+  measurementId:     "G-H0M5239XVK"
 };
 
 const app  = initializeApp(firebaseConfig);
@@ -341,23 +340,44 @@ async function doRegister(){
 async function doLogout(){await signOut(auth);currentUser=null;userLikes=[];userPlaylists=[];renderAll();nav('home');toast('Вышел из аккаунта');}
 async function loadUserData(user) {
   if (!user) return;
+  const CACHE_KEY = 'wa_udata_' + user.uid;
+
+  // Показываем из кэша мгновенно
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached) {
+      userLikes     = cached.likes     || [];
+      userPlaylists = cached.playlists || [];
+      renderLiked(); renderPlaylists(); renderProfile(); updateLikesBadge();
+    }
+  } catch {}
+
+  // Грузим свежие данные параллельно
   const uRef = doc(db, 'users', user.uid);
-  const snap = await getDoc(uRef).catch(() => null);
+  const [snap, plSn] = await Promise.all([
+    getDoc(uRef).catch(() => null),
+    getDocs(query(collection(db,'playlists'), where('uid','==',user.uid))).catch(()=>null)
+  ]);
+
   if (!snap || !snap.exists()) {
     await setDoc(uRef, {uid:user.uid, email:user.email, name:user.displayName||'', likes:[], createdAt:Date.now()}).catch(()=>{});
     userLikes = [];
   } else {
     userLikes = snap.data().likes || [];
   }
-  renderLiked();
-  renderProfile();
-  updateLikesBadge();
-  renderHomeGrid();
-  renderCatalogList();
-  const plSn = await getDocs(query(collection(db,'playlists'), where('uid','==',user.uid))).catch(()=>null);
+
   userPlaylists = plSn ? plSn.docs.map(d=>({id:d.id,...d.data()})) : [];
-  renderPlaylists();
-  renderProfile();
+
+  // Сохраняем в кэш
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      likes: userLikes,
+      playlists: userPlaylists,
+      ts: Date.now()
+    }));
+  } catch {}
+
+  renderLiked(); renderPlaylists(); renderProfile(); updateLikesBadge();
 }
 
 onAuthStateChanged(auth, async user => {
