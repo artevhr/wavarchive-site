@@ -492,8 +492,13 @@ function updatePlayerUI(t) {
   document.querySelector('#pl-heart svg')?.setAttribute('fill', liked ? 'currentColor' : 'none');
 
   // Full player
-  document.getElementById('fp-title').textContent  = t.title;
-  document.getElementById('fp-artist').textContent = t.artist;
+  document.getElementById('fp-title').textContent = t.title;
+  const fpArtist = document.getElementById('fp-artist');
+  fpArtist.textContent = t.artist;
+  fpArtist.style.cursor = 'pointer';
+  fpArtist.style.textDecoration = 'underline';
+  fpArtist.style.textDecorationColor = 'var(--border2)';
+  fpArtist.onclick = () => { closeFullPlayer(); openArtistPage(t.artist); };
   const fpCover = document.getElementById('fp-cover');
   if (url) { fpCover.innerHTML = `<img src="${esc(url)}"`+'>'; }
   else { fpCover.innerHTML = genreEmoji(t.genre); fpCover.style.fontSize = '72px'; }

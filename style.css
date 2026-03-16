@@ -265,7 +265,7 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.3)}
 /* ── FULL SCREEN PLAYER ── */
 .fullplayer{
   position:fixed;inset:0;background:var(--bg);
-  z-index:200;display:flex;flex-direction:column;align-items:center;
+  z-index:300;display:flex;flex-direction:column;align-items:center;
   padding:0 24px 32px;
   transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
   overflow:hidden;
@@ -407,7 +407,7 @@ textarea.form-input{resize:vertical;min-height:72px}
 .tag-genre{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border);color:var(--muted2);vertical-align:middle}
 .spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite;margin:32px auto;display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast-area{position:fixed;bottom:calc(var(--ph) + 12px);right:14px;z-index:2000;display:flex;flex-direction:column;gap:6px}
+.toast-area{position:fixed;bottom:12px;right:14px;z-index:2000;display:flex;flex-direction:column;gap:6px}
 .toast{background:var(--surf2);border:1px solid var(--border2);border-left:3px solid var(--acc);padding:10px 14px;font-size:11px;max-width:260px;animation:tin .25s ease}
 .toast.err{border-left-color:var(--danger)}
 @keyframes tin{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -447,7 +447,8 @@ textarea.form-input{resize:vertical;min-height:72px}
   .mob-icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--muted2);cursor:pointer;flex-shrink:0}
   .mob-icon-btn svg{width:18px;height:18px}
   .content{padding:16px 14px 0}
-  .content>.page{padding-bottom:calc(56px + 64px + 16px)}
+  .content{padding-bottom:calc(64px + 56px)}
+  .content>.page{padding-bottom:24px}
   .hero{padding:22px 18px;margin-bottom:14px}
   .hero-h{font-size:26px;letter-spacing:-1px}
   .hero-p{font-size:11px}
@@ -463,7 +464,7 @@ textarea.form-input{resize:vertical;min-height:72px}
   .player{
     position:fixed;bottom:56px;left:0;right:0;height:64px;
     grid-area:unset;grid-template-columns:1fr auto;
-    padding:0 12px;gap:10px;z-index:50;
+    padding:0 12px;gap:10px;z-index:55;
     border-top:1px solid var(--border);background:var(--surf);
   }
   .pl-center{display:none}
