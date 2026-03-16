@@ -2,13 +2,15 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey:            "REPLACE_API_KEY",
-  authDomain:        "REPLACE_AUTH_DOMAIN",
-  projectId:         "REPLACE_PROJECT_ID",
-  storageBucket:     "REPLACE_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_SENDER_ID",
-  appId:             "REPLACE_APP_ID"
+  apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
+  authDomain: "wavarchive-73dfb.firebaseapp.com",
+  projectId: "wavarchive-73dfb",
+  storageBucket: "wavarchive-73dfb.firebasestorage.app",
+  messagingSenderId: "803800269262",
+  appId: "1:803800269262:web:d274f1c0169b210a4b2b9f",
+  measurementId: "G-H0M5239XVK"
 };
 
 const app  = initializeApp(firebaseConfig);
