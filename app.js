@@ -303,21 +303,22 @@ async function createPlaylist() {
   if (!uid()) { toast('Войди в аккаунт', true); return; }
   const pl = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
   closeModal('m-create-pl');
-  try {
-    const ref = await addDoc(collection(db, 'playlists'), pl);
-    pl.id = ref.id;
-    userPlaylists.push(pl);
-    renderPlaylists();
-    toast('✓ Плейлист «' + name + '» создан');
-    try {
-      const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
-      cache.playlists = userPlaylists;
-      localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
-    } catch {}
-  } catch(e) {
-    console.error('createPlaylist:', e.code, e.message);
-    toast('Ошибка создания плейлиста: ' + (e.code||e.message), true);
-  }
+  addDoc(collection(db, 'playlists'), pl)
+    .then(ref => {
+      pl.id = ref.id;
+      userPlaylists.push(pl);
+      renderPlaylists();
+      toast('✓ Плейлист «' + name + '» создан');
+      try {
+        const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+        cache.playlists = userPlaylists;
+        localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+      } catch {}
+    })
+    .catch(e => {
+      console.error('createPlaylist:', e.code, e.message);
+      toast('Ошибка: ' + (e.code || e.message), true);
+    });
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────────
@@ -418,33 +419,25 @@ function openArtistPage(name) {
 function goBackFromArtist() { nav(prevArtistPage); }
 
 // ── SHARE ─────────────────────────────────────────────────────────────────────
-let _shareUrl = '';
-
 function shareTrack(id) {
-  _shareUrl = location.origin + location.pathname + '?track=' + id;
-  document.getElementById('share-url-text').textContent = _shareUrl;
-  const nativeBtn = document.getElementById('btn-native-share');
-  if (nativeBtn) nativeBtn.style.display = navigator.share ? '' : 'none';
-  openModal('m-share');
+  const url = location.origin + location.pathname + '?track=' + id;
+  const t = tracks.find(x => x.id === id);
+  const title = t ? `${t.title} — ${t.artist}` : 'WAVARCHIVE';
+  if (navigator.share) {
+    navigator.share({ title, url }).catch(() => {
+      navigator.clipboard.writeText(url).then(() => toast('✓ Ссылка скопирована')).catch(() => {});
+    });
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      const el = document.createElement('div');
+      el.className = 'share-copied'; el.textContent = '✓ Ссылка скопирована';
+      document.body.appendChild(el); setTimeout(() => el.remove(), 2000);
+    }).catch(() => toast('Ссылка: ' + url));
+  }
 }
 
-function copyShareUrl() {
-  navigator.clipboard.writeText(_shareUrl).then(() => {
-    const btn = document.querySelector('#m-share .btn-prime');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Скопировано!';
-    btn.style.background = 'var(--c-green, #3ddc84)';
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.style.background = '';
-    }, 2000);
-  }).catch(() => toast('Не удалось скопировать'));
-}
-
-function nativeShare() {
-  if (!navigator.share) return;
-  navigator.share({ title: 'WAVARCHIVE', url: _shareUrl }).catch(() => {});
-}
+function copyShareUrl() {}
+function nativeShare() {}
 
 function checkUrlTrack() {
   const tid = new URLSearchParams(location.search).get('track');
@@ -763,7 +756,7 @@ function openCtxWithShare(trackId, btn) {
   ctxTargetId = trackId;
   const pls   = myPlaylists();
   const items = document.getElementById('ctx-items');
-  const shareBtn = `<div class="ctx-item" onclick="shareTrack('${trackId}');closeCtx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Поделиться</div>`;
+  const shareBtn = `<div class="ctx-item" onclick="closeCtx();setTimeout(()=>shareTrack('${trackId}'),100)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Поделиться</div>`;
   const newBtn = `<div class="ctx-item" onclick="openCreatePl();closeCtx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новый плейлист</div>`;
   items.innerHTML = shareBtn + pls.map(pl => {
     const has = pl.tracks.includes(trackId);

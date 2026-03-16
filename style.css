@@ -407,8 +407,8 @@ textarea.form-input{resize:vertical;min-height:72px}
 .tag-genre{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border);color:var(--muted2);vertical-align:middle}
 .spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite;margin:32px auto;display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast-area{position:fixed;bottom:12px;right:14px;z-index:2000;display:flex;flex-direction:column;gap:6px}
-.toast{background:var(--surf2);border:1px solid var(--border2);border-left:3px solid var(--acc);padding:10px 14px;font-size:11px;max-width:260px;animation:tin .25s ease}
+.toast-area{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:var(--surf);border:1px solid var(--border2);border-left:3px solid var(--acc);padding:10px 20px;font-size:12px;max-width:320px;animation:tin .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap}
 .toast.err{border-left-color:var(--danger)}
 @keyframes tin{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 .share-copied{position:fixed;bottom:calc(var(--ph)+68px);left:50%;transform:translateX(-50%);background:var(--acc);color:#000;font-size:11px;font-weight:700;letter-spacing:.5px;padding:8px 20px;z-index:3000;animation:tin .25s ease,fade-out .3s ease 1.5s forwards;pointer-events:none;white-space:nowrap}
