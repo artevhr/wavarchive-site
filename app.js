@@ -180,7 +180,7 @@ async function setSort(sort, btn) {
   document.querySelectorAll('.sort-tab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   renderHomeGridSync();
-  if (sort !== 'new') {
+  if (sort !== 'new' && WORKER_URL && !WORKER_URL.includes('YOUR_WORKER')) {
     const r = await fetch(WORKER_URL + '/plays').catch(() => null);
     if (r && r.ok) { playsCache = await r.json(); playsCacheTime = Date.now(); }
     renderHomeGridSync();
@@ -441,6 +441,7 @@ function checkUrlTrack() {
 
 // ── PLAYS ─────────────────────────────────────────────────────────────────────
 function incrementPlays(id) {
+  if (!WORKER_URL || WORKER_URL.includes('YOUR_WORKER')) return;
   fetch(WORKER_URL + '/play', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -648,7 +649,14 @@ function closeFullPlayer() {
 function openCtxPlayer() {
   const t = queueTracks[queueIdx];
   if (!t) return;
-  openCtx(t.id, document.getElementById('fp-more') || document.body);
+  // Создаём фиктивный элемент в центре экрана для позиционирования меню
+  const fakeBtn = {
+    getBoundingClientRect: () => ({
+      bottom: window.innerHeight / 2,
+      left: window.innerWidth / 2 - 95
+    })
+  };
+  openCtx(t.id, fakeBtn);
 }
 
 // ── WAVE ──────────────────────────────────────────────────────────────────────
@@ -679,18 +687,14 @@ async function toggleLike(id) {
   if (!uid()) { openAuth(); return; }
   const has  = userLikes.includes(id);
   const uRef = doc(db, 'users', uid());
-  const snap = await getDoc(uRef).catch(() => null);
-  if (!snap || !snap.exists()) {
-    await setDoc(uRef, { uid: uid(), email: currentUser.email, likes: [], createdAt: Date.now() }).catch(() => {});
-  }
   if (has) {
     userLikes = userLikes.filter(x => x !== id);
-    await updateDoc(uRef, { likes: arrayRemove(id) }).catch(e => console.error(e));
     toast('Убрано из понравившихся');
+    setDoc(uRef, { likes: arrayRemove(id) }, { merge: true }).catch(e => console.error('like remove:', e));
   } else {
     userLikes = [...userLikes, id];
-    await updateDoc(uRef, { likes: arrayUnion(id) }).catch(e => console.error(e));
     toast('❤ Добавлено');
+    setDoc(uRef, { likes: arrayUnion(id) }, { merge: true }).catch(e => console.error('like add:', e));
   }
   refreshLikeUI(id, !has);
   updateLikesBadge();
