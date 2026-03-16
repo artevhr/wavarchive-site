@@ -23,22 +23,6 @@ const TRACKS_URL = `${RAW}/tracks.json`;
 const WORKER_URL = 'https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev';
 const RECENT_KEY = 'wa_recent';
 
-// ── VISUAL DEBUG (удали после отладки) ───────────────────────────────────────
-const _dbg = document.createElement('div');
-_dbg.id = '_debug';
-_dbg.style.cssText = 'position:fixed;bottom:140px;left:8px;right:8px;max-height:160px;overflow-y:auto;background:rgba(0,0,0,.92);border:1px solid #ff5e1a;font-size:10px;font-family:monospace;z-index:9999;padding:6px;display:none;color:#eee;border-radius:4px';
-document.addEventListener('DOMContentLoaded', () => document.body.appendChild(_dbg));
-function dbg(msg, color='#eee') {
-  _dbg.style.display = 'block';
-  const d = document.createElement('div');
-  d.style.color = color;
-  d.textContent = new Date().toLocaleTimeString() + ' ' + msg;
-  _dbg.prepend(d);
-  if (_dbg.children.length > 30) _dbg.lastChild.remove();
-}
-window.onerror = (m,s,l,c,e) => dbg('ERR: '+m, '#ff5e1a');
-window.onunhandledrejection = e => dbg('PROMISE: '+(e.reason?.message||e.reason), '#ff5e1a');
-
 
 
 // Данные артистов — добавляй сюда
@@ -664,7 +648,7 @@ function closeFullPlayer() {
   document.getElementById('fullplayer').classList.remove('open');
 }
 
-function openCtxPlayer() { dbg('openCtxPlayer called, queueIdx='+queueIdx);
+function openCtxPlayer() {
   const t = queueTracks[queueIdx];
   if (!t) return;
   // Создаём фиктивный элемент в центре экрана для позиционирования меню
@@ -701,25 +685,42 @@ function stopWave() {
 }
 
 // ── LIKES ─────────────────────────────────────────────────────────────────────
+async function ensureUserDoc(uRef) {
+  try {
+    const snap = await getDoc(uRef);
+    if (!snap.exists()) {
+      await setDoc(uRef, {
+        uid: uid(),
+        email: currentUser.email,
+        name: currentUser.displayName || '',
+        likes: [],
+        createdAt: Date.now()
+      });
+    }
+  } catch(e) { console.error('ensureUserDoc:', e); }
+}
+
 async function toggleLike(id) {
-  dbg('toggleLike: '+id+' uid='+uid());
   if (!uid()) { openAuth(); return; }
   const has  = userLikes.includes(id);
   const uRef = doc(db, 'users', uid());
-  dbg('has='+has+' uRef='+!!uRef);
   if (has) {
     userLikes = userLikes.filter(x => x !== id);
     toast('Убрано из понравившихся');
-    setDoc(uRef, { likes: arrayRemove(id) }, { merge: true }).catch(e => console.error('like remove:', e));
   } else {
     userLikes = [...userLikes, id];
     toast('❤ Добавлено');
-    setDoc(uRef, { likes: arrayUnion(id) }, { merge: true }).catch(e => console.error('like add:', e));
   }
   refreshLikeUI(id, !has);
   updateLikesBadge();
   renderLiked();
-
+  try {
+    await ensureUserDoc(uRef);
+    await updateDoc(uRef, { likes: has ? arrayRemove(id) : arrayUnion(id) });
+    const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+    cache.likes = userLikes;
+    localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+  } catch(e) { console.error('toggleLike Firestore:', e); }
   // Update track detail page button if open
   const tdb = document.getElementById('td-like-btn');
   if (tdb) {
