@@ -924,11 +924,11 @@ async function doRegister() {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, { displayName: name });
     await setDoc(doc(db, 'users', cred.user.uid), { name, email, uid: cred.user.uid, likes: [], createdAt: Date.now() });
-    btn.disabled = false; btn.textContent = 'Создать аккаунт';
     closeModal('m-auth');
   } catch(e) {
-    btn.disabled = false; btn.textContent = 'Создать аккаунт';
     authError(FB_ERR[e.code] || e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Создать аккаунт';
   }
 }
 
@@ -1183,6 +1183,7 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
+window.toggleLyrics=toggleLyrics; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
