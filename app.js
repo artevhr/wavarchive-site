@@ -2,15 +2,13 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
-  authDomain: "wavarchive-73dfb.firebaseapp.com",
-  projectId: "wavarchive-73dfb",
-  storageBucket: "wavarchive-73dfb.firebasestorage.app",
-  messagingSenderId: "803800269262",
-  appId: "1:803800269262:web:d274f1c0169b210a4b2b9f",
-  measurementId: "G-H0M5239XVK"
+  apiKey:            "REPLACE_API_KEY",
+  authDomain:        "REPLACE_AUTH_DOMAIN",
+  projectId:         "REPLACE_PROJECT_ID",
+  storageBucket:     "REPLACE_STORAGE_BUCKET",
+  messagingSenderId: "REPLACE_SENDER_ID",
+  appId:             "REPLACE_APP_ID"
 };
 
 const app  = initializeApp(firebaseConfig);
@@ -33,6 +31,7 @@ let currentSort='new';
 let prevArtistPage='home';
 let playsCache={}, playsCacheTime=0;
 const RECENT_KEY='wa_recent';
+const WORKER_URL='https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev';
 const ARTISTS={};
 
 const aud = document.getElementById('aud');
@@ -68,8 +67,14 @@ async function loadTracks() {
 }
 
 function renderAll() {
-  renderGenreBars(); renderHomeGrid(); renderCatalogList();
-  renderLiked(); renderPlaylists(); renderProfile(); renderAuthArea(); updateLikesBadge();
+  renderGenreBars();
+  renderHomeGridSync();
+  renderCatalogList();
+  renderLiked();
+  renderPlaylists();
+  renderProfile();
+  renderAuthArea();
+  updateLikesBadge();
   renderRecent();
 }
 
@@ -109,11 +114,30 @@ function trackRow(t,i) {
     </div></div>`;
 }
 
-async function renderHomeGrid() {
-  const sorted=await getSortedTracks(currentSort);
-  const data=sorted.filter(t=>genreHome==='all'||t.genre===genreHome).slice(0,12);
+function renderHomeGridSync() {
+  let data = [...tracks];
+  if (currentSort==='new') data.sort((a,b)=>(b.addedAt||'').localeCompare(a.addedAt||''));
+  else if (currentSort==='top'||currentSort==='plays') {
+    const now=Date.now(), week=7*24*60*60*1000;
+    data.sort((a,b)=>{
+      const pa=playsCache[a.id], pb=playsCache[b.id];
+      if(currentSort==='plays') return (pb?.count||0)-(pa?.count||0);
+      const aR=pa&&(now-pa.lastPlayed)<week?pa.count:0;
+      const bR=pb&&(now-pb.lastPlayed)<week?pb.count:0;
+      return bR-aR;
+    });
+  }
+  data = data.filter(t=>genreHome==='all'||t.genre===genreHome).slice(0,12);
   const el=document.getElementById('home-grid');
   el.innerHTML=data.length?data.map(t=>trackCard(t)).join(''):`<div class="empty" style="grid-column:1/-1"><div class="empty-ico">🎵</div><div class="empty-txt">Нет треков</div></div>`;
+}
+
+async function renderHomeGrid() {
+  if (currentSort !== 'new' && (Date.now()-playsCacheTime>60000)) {
+    playsCache = await getPlaysMap();
+    playsCacheTime = Date.now();
+  }
+  renderHomeGridSync();
 }
 function renderCatalogList() {
   const q=searchQ.toLowerCase(), data=tracks.filter(t=>genreCatalog==='all'||t.genre===genreCatalog).filter(t=>!q||t.title.toLowerCase().includes(q)||t.artist.toLowerCase().includes(q));
@@ -305,25 +329,51 @@ async function doRegister(){
     const cred=await createUserWithEmailAndPassword(auth,email,pass);
     await updateProfile(cred.user,{displayName:name});
     await setDoc(doc(db,'users',cred.user.uid),{name,email,uid:cred.user.uid,likes:[],createdAt:Date.now()});
+    btn.disabled=false;btn.textContent='Создать аккаунт';
     closeModal('m-auth');
-  }catch(e){authError(FB_ERR[e.code]||e.message);}
-  finally{btn.disabled=false;btn.textContent='Создать аккаунт';}
+  }catch(e){
+    btn.disabled=false;btn.textContent='Создать аккаунт';
+    authError(FB_ERR[e.code]||e.message);
+  }
 }
 async function doLogout(){await signOut(auth);currentUser=null;userLikes=[];userPlaylists=[];renderAll();nav('home');toast('Вышел из аккаунта');}
-async function loadUserData(user){
-  if(!user)return;
-  const uRef=doc(db,'users',user.uid), snap=await getDoc(uRef).catch(()=>null);
-  if(!snap||!snap.exists()){await setDoc(uRef,{uid:user.uid,email:user.email,name:user.displayName||'',likes:[],createdAt:Date.now()}).catch(()=>{});userLikes=[];}
-  else{userLikes=snap.data().likes||[];}
-  const plSn=await getDocs(query(collection(db,'playlists'),where('uid','==',user.uid))).catch(()=>null);
-  userPlaylists=plSn?plSn.docs.map(d=>({id:d.id,...d.data()})):[];
-  renderAll();
+async function loadUserData(user) {
+  if (!user) return;
+  const uRef = doc(db, 'users', user.uid);
+  const snap = await getDoc(uRef).catch(() => null);
+  if (!snap || !snap.exists()) {
+    await setDoc(uRef, {uid:user.uid, email:user.email, name:user.displayName||'', likes:[], createdAt:Date.now()}).catch(()=>{});
+    userLikes = [];
+  } else {
+    userLikes = snap.data().likes || [];
+  }
+  renderLiked();
+  renderProfile();
+  updateLikesBadge();
+  renderHomeGrid();
+  renderCatalogList();
+  const plSn = await getDocs(query(collection(db,'playlists'), where('uid','==',user.uid))).catch(()=>null);
+  userPlaylists = plSn ? plSn.docs.map(d=>({id:d.id,...d.data()})) : [];
+  renderPlaylists();
+  renderProfile();
 }
 
-onAuthStateChanged(auth,user=>{
-  currentUser=user;renderAuthArea();
-  if(user){if(firstAuth){firstAuth=false;toast(`✓ Добро пожаловать, ${user.displayName||user.email}!`);}loadUserData(user);}
-  else{firstAuth=false;userLikes=[];userPlaylists=[];renderAll();}
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  if (user) {
+    renderAuthArea();
+    if (firstAuth) { firstAuth=false; toast(`✓ Добро пожаловать, ${user.displayName||user.email}!`); }
+    loadUserData(user);
+  } else {
+    firstAuth=false;
+    userLikes=[];
+    userPlaylists=[];
+    renderAuthArea();
+    renderLiked();
+    renderPlaylists();
+    renderProfile();
+    updateLikesBadge();
+  }
 });
 
 function startWave(){if(!tracks.length){toast('Нет треков',true);return;}queueTracks=[...tracks].sort(()=>Math.random()-.5);queueIdx=0;isWave=true;startPlay();toast('〰 Волна запущена');document.querySelectorAll('.nav-wave').forEach(b=>b.classList.add('active'));}
@@ -365,15 +415,19 @@ document.getElementById('reg-pass').addEventListener('keydown',e=>{if(e.key==='E
 
 
 function incrementPlays(id) {
-  setDoc(doc(db,'plays',id),{count:increment(1),lastPlayed:Date.now()},{merge:true}).catch(()=>{});
+  fetch(WORKER_URL+'/play',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({trackId:id})
+  }).catch(()=>{});
 }
 
 async function getPlaysMap() {
-  const snap=await getDocs(collection(db,'plays')).catch(()=>null);
-  if(!snap) return {};
-  const map={};
-  snap.docs.forEach(d=>{map[d.id]={count:d.data().count||0,lastPlayed:d.data().lastPlayed||0};});
-  return map;
+  try {
+    const r=await fetch(WORKER_URL+'/plays');
+    if(!r.ok) return {};
+    return await r.json();
+  } catch { return {}; }
 }
 
 function shareTrack(id) {
@@ -404,21 +458,39 @@ function renderRecent() {
 }
 
 async function getSortedTracks(sort) {
-  const now=Date.now();
-  if(now-playsCacheTime>60000){playsCache=await getPlaysMap();playsCacheTime=now;}
-  const week=7*24*60*60*1000;
-  let data=[...tracks];
-  if(sort==='new'){data.sort((a,b)=>(b.addedAt||'').localeCompare(a.addedAt||''));}
-  else if(sort==='top'){data.sort((a,b)=>{const pa=playsCache[a.id],pb=playsCache[b.id];const aR=pa&&(now-pa.lastPlayed)<week?pa.count:0,bR=pb&&(now-pb.lastPlayed)<week?pb.count:0;return bR-aR;});}
-  else if(sort==='plays'){data.sort((a,b)=>(playsCache[b.id]?.count||0)-(playsCache[a.id]?.count||0));}
+  const now = Date.now();
+  if (sort !== 'new') {
+    if (now - playsCacheTime > 60000) {
+      getPlaysMap().then(m => { playsCache=m; playsCacheTime=Date.now(); });
+    }
+  }
+  const week = 7*24*60*60*1000;
+  let data = [...tracks];
+  if (sort==='new') {
+    data.sort((a,b) => (b.addedAt||'').localeCompare(a.addedAt||''));
+  } else if (sort==='top') {
+    data.sort((a,b) => {
+      const pa=playsCache[a.id], pb=playsCache[b.id];
+      const aR=pa&&(now-pa.lastPlayed)<week?pa.count:0;
+      const bR=pb&&(now-pb.lastPlayed)<week?pb.count:0;
+      return bR-aR;
+    });
+  } else if (sort==='plays') {
+    data.sort((a,b) => (playsCache[b.id]?.count||0)-(playsCache[a.id]?.count||0));
+  }
   return data;
 }
 
-async function setSort(sort,btn) {
-  currentSort=sort;
+async function setSort(sort, btn) {
+  currentSort = sort;
   document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  await renderHomeGrid();
+  if(btn) btn.classList.add('active');
+  renderHomeGridSync();
+  if (sort !== 'new') {
+    playsCache = await getPlaysMap();
+    playsCacheTime = Date.now();
+    renderHomeGridSync();
+  }
 }
 
 function preloadNext() {
@@ -444,7 +516,7 @@ function checkUrlTrack() {
   if(tid){const t=tracks.find(x=>x.id===tid);if(t)openTrack(tid);}
 }
 
-window.setGenre=setGenre;window.nav=nav;window.openTrack=openTrack;window.playById=playById;
+window.setGenre=setGenre;window.renderHomeGrid=renderHomeGrid;window.nav=nav;window.openTrack=openTrack;window.playById=playById;
 window.toggleLike=toggleLike;window.toggleLikePlayer=toggleLikePlayer;window.openCtx=openCtx;
 window.closeCtx=closeCtx;window.addToPlaylist=addToPlaylist;window.openPlaylistDetail=openPlaylistDetail;
 window.openCreatePl=openCreatePl;window.createPlaylist=createPlaylist;window.openAuth=openAuth;
