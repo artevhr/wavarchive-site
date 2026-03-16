@@ -415,7 +415,7 @@ textarea.form-input{resize:vertical;min-height:72px}
 @keyframes fade-out{to{opacity:0}}
 
 /* ── MOBILE BOTTOM NAV ── */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;min-height:56px;padding-bottom:env(safe-area-inset-bottom, 0px);background:var(--surf);border-top:1px solid var(--border);z-index:60;grid-template-columns:repeat(5,1fr);align-items:stretch}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--surf);border-top:1px solid var(--border);z-index:60;grid-template-columns:repeat(5,1fr);align-items:stretch}
 .mob-nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:color .15s;position:relative}
 .mob-nav-btn svg{width:20px;height:20px}
 .mob-nav-btn.active{color:var(--acc)}
@@ -447,7 +447,7 @@ textarea.form-input{resize:vertical;min-height:72px}
   .mob-icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--muted2);cursor:pointer;flex-shrink:0}
   .mob-icon-btn svg{width:18px;height:18px}
   .content{padding:16px 14px 0}
-  .content>.page{padding-bottom:calc(64px + 56px + 20px) !important}
+  .content>.page{padding-bottom:148px}
   .hero{padding:22px 18px;margin-bottom:14px}
   .hero-h{font-size:26px;letter-spacing:-1px}
   .hero-p{font-size:11px}
@@ -462,20 +462,17 @@ textarea.form-input{resize:vertical;min-height:72px}
   .trow-right{gap:6px;padding-right:10px}
   .player{
     position:fixed;
-    bottom:calc(56px + env(safe-area-inset-bottom, 0px));
+    bottom:56px;
     left:0;
     right:0;
     height:64px;
     z-index:55;
-    grid-area:unset;
-    grid-template-columns:1fr auto;
-    grid-template-rows:unset;
+    display:flex;
+    align-items:center;
     padding:0 12px;
     gap:10px;
     border-top:1px solid var(--border);
     background:var(--surf);
-    display:grid;
-    align-items:center;
   }
   .pl-center{display:none}
   .pl-right{display:none}

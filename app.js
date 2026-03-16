@@ -301,23 +301,26 @@ async function createPlaylist() {
   const name = document.getElementById('pl-inp-name').value.trim();
   if (!name) { toast('Введи название', true); return; }
   if (!uid()) { toast('Войди в аккаунт', true); return; }
-  const pl = {
-    name,
-    desc: document.getElementById('pl-inp-desc').value.trim(),
-    tracks: [],
-    uid: uid(),
-    createdAt: Date.now()
-  };
+  const btn = document.querySelector('#m-create-pl .btn-prime');
+  if (btn) { btn.disabled = true; btn.textContent = 'Создаём...'; }
+  const pl = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
   try {
     const ref = await addDoc(collection(db, 'playlists'), pl);
     pl.id = ref.id;
     userPlaylists.push(pl);
+    try {
+      const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+      cache.playlists = userPlaylists;
+      localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+    } catch {}
     closeModal('m-create-pl');
     renderPlaylists();
     toast('✓ Плейлист создан');
   } catch(e) {
-    console.error('createPlaylist error:', e.code, e.message);
-    toast('Ошибка ' + (e.code || e.message), true);
+    console.error('createPlaylist:', e.code, e.message);
+    toast('Ошибка: ' + (e.code === 'permission-denied' ? 'Нет доступа — проверь правила Firestore' : e.message), true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Создать'; }
   }
 }
 
@@ -669,7 +672,7 @@ function openCtxPlayer() {
         left: Math.max(8, window.innerWidth / 2 - 95)
       })
     };
-    openCtx(t.id, fakeBtn);
+    openCtxWithShare(t.id, fakeBtn);
   }, 50);
 }
 
@@ -772,6 +775,25 @@ function refreshLikeUI(id, liked) {
 }
 
 // ── CONTEXT MENU ──────────────────────────────────────────────────────────────
+function openCtxWithShare(trackId, btn) {
+  if (!uid()) { openAuth(); return; }
+  ctxTargetId = trackId;
+  const pls   = myPlaylists();
+  const items = document.getElementById('ctx-items');
+  const shareBtn = `<div class="ctx-item" onclick="shareTrack('${trackId}');closeCtx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Поделиться</div>`;
+  const newBtn = `<div class="ctx-item" onclick="openCreatePl();closeCtx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новый плейлист</div>`;
+  items.innerHTML = shareBtn + pls.map(pl => {
+    const has = pl.tracks.includes(trackId);
+    return `<div class="ctx-item${has?' checked':''}" onclick="addToPlaylist('${pl.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${has?'<polyline points="20 6 9 17 4 12"/>':'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>'}</svg>${esc(pl.name)}</div>`;
+  }).join('') + newBtn;
+  const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { bottom: 100, left: 100 };
+  const menu = document.getElementById('ctx-menu');
+  menu.style.top  = (rect.bottom + 6) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+  menu.classList.add('open');
+  _ctxJustOpened = true;
+}
+
 function openCtx(trackId, btn) {
   if (!uid()) { openAuth(); return; }
   ctxTargetId = trackId;
@@ -1035,7 +1057,7 @@ window.goBackFromTrack=goBackFromTrack; window.goBackFromArtist=goBackFromArtist
 window.toggleLike=toggleLike; window.toggleLikePlayer=toggleLikePlayer;
 window.togglePlay=togglePlay; window.nextTrack=nextTrack; window.prevTrack=prevTrack;
 window.toggleShuffle=toggleShuffle; window.toggleRepeat=toggleRepeat;
-window.openCtx=openCtx; window.closeCtx=closeCtx; window.addToPlaylist=addToPlaylist;
+window.openCtx=openCtx; window.openCtxWithShare=openCtxWithShare; window.closeCtx=closeCtx; window.addToPlaylist=addToPlaylist;
 window.openPlaylistDetail=openPlaylistDetail; window.openCreatePl=openCreatePl; window.createPlaylist=createPlaylist;
 window.openAuth=openAuth; window.switchAuthMode=switchAuthMode;
 window.doLogin=doLogin; window.doRegister=doRegister; window.doLogout=doLogout;
