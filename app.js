@@ -87,7 +87,11 @@ async function loadTracks() {
     document.getElementById('home-grid').innerHTML = empty;
     document.getElementById('catalog-list').innerHTML = empty;
   }
-  renderAll();
+  renderPublic();
+  // если пользователь уже авторизован — рендерим приватные части
+  if (currentUser) {
+    renderLiked(); renderPlaylists(); renderProfile(); updateLikesBadge();
+  }
   checkUrlTrack();
 }
 
@@ -101,6 +105,14 @@ function renderAll() {
   renderProfile();
   renderAuthArea();
   updateLikesBadge();
+  renderRecent();
+}
+
+function renderPublic() {
+  renderGenreBars();
+  renderHomeGridSync();
+  renderCatalogList();
+  renderAuthArea();
   renderRecent();
 }
 
@@ -576,6 +588,22 @@ function updatePlayerUI(t) {
   document.querySelector('#fp-heart svg')?.setAttribute('fill', liked ? 'currentColor' : 'none');
 
   document.title = `${t.title} · ${t.artist} — WAVARCHIVE`;
+  // Media Session — обложка на экране блокировки
+  if ('mediaSession' in navigator) {
+    const artwork = coverUrl(t);
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  t.title,
+      artist: t.artist,
+      album:  'WAVARCHIVE',
+      artwork: artwork ? [
+        { src: artwork, sizes: '512x512', type: 'image/jpeg' }
+      ] : []
+    });
+    navigator.mediaSession.setActionHandler('play',           () => aud.play());
+    navigator.mediaSession.setActionHandler('pause',          () => aud.pause());
+    navigator.mediaSession.setActionHandler('nexttrack',      () => nextTrack());
+    navigator.mediaSession.setActionHandler('previoustrack',  () => prevTrack());
+  }
 }
 
 function markNow() {
