@@ -781,6 +781,14 @@ function stopWave() {
 }
 
 // ── LIKES ─────────────────────────────────────────────────────────────────────
+function saveLikeCache() {
+  try {
+    const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+    cache.likes = userLikes;
+    localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+  } catch {}
+}
+
 async function toggleLike(id) {
   if (!uid()) { openAuth(); return; }
   const has  = userLikes.includes(id);
@@ -795,15 +803,15 @@ async function toggleLike(id) {
   refreshLikeUI(id, !has);
   updateLikesBadge();
   renderLiked();
-  setDoc(uRef, { uid: uid(), likes: has ? arrayRemove(id) : arrayUnion(id) }, { merge: true })
-    .then(() => {
-      try {
-        const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
-        cache.likes = userLikes;
-        localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
-      } catch {}
-    })
-    .catch(e => console.error('toggleLike:', e.code, e.message));
+  const op = has ? arrayRemove(id) : arrayUnion(id);
+  updateDoc(uRef, { likes: op })
+    .then(() => saveLikeCache())
+    .catch(() => {
+      // документ не существует — создаём и повторяем
+      setDoc(uRef, { uid: uid(), email: currentUser.email, name: currentUser.displayName || '', likes: userLikes, createdAt: Date.now() })
+        .then(() => saveLikeCache())
+        .catch(e => console.error('toggleLike:', e.code, e.message));
+    });
   // Update track detail page button if open
   const tdb = document.getElementById('td-like-btn');
   if (tdb) {
