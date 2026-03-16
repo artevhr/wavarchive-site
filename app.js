@@ -1,3 +1,4 @@
+// v202603160720
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -299,15 +300,25 @@ function openCreatePl() {
 async function createPlaylist() {
   const name = document.getElementById('pl-inp-name').value.trim();
   if (!name) { toast('Введи название', true); return; }
-  await setDoc(doc(db, 'users', uid()), { uid: uid() }, { merge: true }).catch(() => {});
-  const pl  = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
-  const ref = await addDoc(collection(db, 'playlists'), pl).catch(e => { console.error('createPlaylist:', e); toast('Ошибка: ' + e.message, true); return null; });
-  if (!ref) return;
-  pl.id = ref.id;
-  userPlaylists.push(pl);
-  closeModal('m-create-pl');
-  renderPlaylists();
-  toast('✓ Плейлист создан');
+  if (!uid()) { toast('Войди в аккаунт', true); return; }
+  const pl = {
+    name,
+    desc: document.getElementById('pl-inp-desc').value.trim(),
+    tracks: [],
+    uid: uid(),
+    createdAt: Date.now()
+  };
+  try {
+    const ref = await addDoc(collection(db, 'playlists'), pl);
+    pl.id = ref.id;
+    userPlaylists.push(pl);
+    closeModal('m-create-pl');
+    renderPlaylists();
+    toast('✓ Плейлист создан');
+  } catch(e) {
+    console.error('createPlaylist error:', e.code, e.message);
+    toast('Ошибка ' + (e.code || e.message), true);
+  }
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────────
@@ -651,13 +662,15 @@ function closeFullPlayer() {
 function openCtxPlayer() {
   const t = queueTracks[queueIdx];
   if (!t) return;
-  const fakeBtn = {
-    getBoundingClientRect: () => ({
-      bottom: window.innerHeight - 180,
-      left: Math.max(8, window.innerWidth / 2 - 95)
-    })
-  };
-  openCtx(t.id, fakeBtn);
+  setTimeout(() => {
+    const fakeBtn = {
+      getBoundingClientRect: () => ({
+        bottom: window.innerHeight - 180,
+        left: Math.max(8, window.innerWidth / 2 - 95)
+      })
+    };
+    openCtx(t.id, fakeBtn);
+  }, 50);
 }
 
 // ── WAVE ──────────────────────────────────────────────────────────────────────
@@ -774,6 +787,7 @@ function openCtx(trackId, btn) {
   menu.style.top  = (rect.bottom + 6) + 'px';
   menu.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   menu.classList.add('open');
+  _ctxJustOpened = true;
 }
 
 function closeCtx() { document.getElementById('ctx-menu').classList.remove('open'); }
@@ -788,7 +802,9 @@ async function addToPlaylist(plId) {
   renderPlaylists();
 }
 
+let _ctxJustOpened = false;
 document.addEventListener('click', e => {
+  if (_ctxJustOpened) { _ctxJustOpened = false; return; }
   if (!e.target.closest('.ctx-menu') && !e.target.closest('.act-btn.add') && !e.target.closest('.btn[onclick*="openCtx"]') && !e.target.closest('.fp-more')) closeCtx();
 });
 
