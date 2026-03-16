@@ -301,26 +301,22 @@ async function createPlaylist() {
   const name = document.getElementById('pl-inp-name').value.trim();
   if (!name) { toast('Введи название', true); return; }
   if (!uid()) { toast('Войди в аккаунт', true); return; }
-  const btn = document.querySelector('#m-create-pl .btn-prime');
-  if (btn) { btn.disabled = true; btn.textContent = 'Создаём...'; }
   const pl = { name, desc: document.getElementById('pl-inp-desc').value.trim(), tracks: [], uid: uid(), createdAt: Date.now() };
+  closeModal('m-create-pl');
   try {
     const ref = await addDoc(collection(db, 'playlists'), pl);
     pl.id = ref.id;
     userPlaylists.push(pl);
+    renderPlaylists();
+    toast('✓ Плейлист «' + name + '» создан');
     try {
       const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
       cache.playlists = userPlaylists;
       localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
     } catch {}
-    closeModal('m-create-pl');
-    renderPlaylists();
-    toast('✓ Плейлист создан');
   } catch(e) {
     console.error('createPlaylist:', e.code, e.message);
-    toast('Ошибка: ' + (e.code === 'permission-denied' ? 'Нет доступа — проверь правила Firestore' : e.message), true);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Создать'; }
+    toast('Ошибка создания плейлиста: ' + (e.code||e.message), true);
   }
 }
 
@@ -700,21 +696,6 @@ function stopWave() {
 }
 
 // ── LIKES ─────────────────────────────────────────────────────────────────────
-async function ensureUserDoc(uRef) {
-  try {
-    const snap = await getDoc(uRef);
-    if (!snap.exists()) {
-      await setDoc(uRef, {
-        uid: uid(),
-        email: currentUser.email,
-        name: currentUser.displayName || '',
-        likes: [],
-        createdAt: Date.now()
-      });
-    }
-  } catch(e) { console.error('ensureUserDoc:', e); }
-}
-
 async function toggleLike(id) {
   if (!uid()) { openAuth(); return; }
   const has  = userLikes.includes(id);
@@ -729,13 +710,15 @@ async function toggleLike(id) {
   refreshLikeUI(id, !has);
   updateLikesBadge();
   renderLiked();
-  try {
-    await ensureUserDoc(uRef);
-    await updateDoc(uRef, { likes: has ? arrayRemove(id) : arrayUnion(id) });
-    const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
-    cache.likes = userLikes;
-    localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
-  } catch(e) { console.error('toggleLike Firestore:', e); }
+  setDoc(uRef, { uid: uid(), likes: has ? arrayRemove(id) : arrayUnion(id) }, { merge: true })
+    .then(() => {
+      try {
+        const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+        cache.likes = userLikes;
+        localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+      } catch {}
+    })
+    .catch(e => console.error('toggleLike:', e.code, e.message));
   // Update track detail page button if open
   const tdb = document.getElementById('td-like-btn');
   if (tdb) {
