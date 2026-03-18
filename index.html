@@ -380,7 +380,11 @@
   </div>
 </div>
 <audio id="aud" preload="metadata"></audio>
-<script type="module" src="app.js?v=202603160832"></script>
+<script type="module">
+  import './firebase.js';
+  // Ждём fb-ready перед загрузкой app.js
+</script>
+<script type="module" src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
