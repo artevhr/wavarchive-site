@@ -293,9 +293,12 @@
 
 <audio id="aud" preload="metadata"></audio>
 
-<script type="module" src="firebase.js"></script>
-<script src="app.js" defer></script>
-
+<script type="module">
+  import './firebase.js';
+  const s = document.createElement('script');
+  s.src = 'app.js';
+  document.head.appendChild(s);
+</script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
