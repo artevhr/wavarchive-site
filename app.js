@@ -14,7 +14,7 @@ function showErr(msg) {
 // v202603160720
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCQVtvodBLUbbxXFUA1fxIOf1DgOdzjJS4",
@@ -347,6 +347,8 @@ function openPlaylistDetail(plId) {
       : `<div class="empty"><div class="empty-ico">🎵</div><div class="empty-txt">Плейлист пустой</div></div>`}`;
   const shareBtn = document.getElementById('btn-share-pl');
   if (shareBtn) shareBtn.style.display = '';
+  const delBtn = document.getElementById('btn-delete-pl');
+  if (delBtn) delBtn.style.display = '';
   prevPage = 'playlists';
   nav('pl-detail');
 }
@@ -359,6 +361,38 @@ function sharePlaylist(plId) {
     navigator.share({ title: 'WAVARCHIVE — плейлист', url }).catch(() => {});
   } else {
     navigator.clipboard.writeText(url).then(() => toast('✓ Ссылка скопирована')).catch(() => toast('Ссылка: ' + url));
+  }
+}
+
+async function deletePlaylist() {
+  if (!_currentPlId) return;
+  const pl = userPlaylists.find(p => p.id === _currentPlId);
+  if (!pl) return;
+  if (!confirm(`Удалить плейлист «${pl.name}»?`)) return;
+  try {
+    const { deleteDoc, doc: fsDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').catch(() => ({}));
+    if (deleteDoc) {
+      await deleteDoc(fsDoc(db, 'playlists', _currentPlId));
+    } else {
+      // fallback — use already imported deleteDoc via workaround
+      await fetch(`https://firestore.googleapis.com/v1/projects/wavarchive-73dfb/databases/(default)/documents/playlists/${_currentPlId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + await auth.currentUser.getIdToken() }
+      });
+    }
+    userPlaylists = userPlaylists.filter(p => p.id !== _currentPlId);
+    try {
+      const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+      cache.playlists = userPlaylists;
+      localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+    } catch {}
+    nav('playlists');
+    renderPlaylists();
+    toast('Плейлист удалён');
+    _currentPlId = null;
+  } catch(e) {
+    console.error('deletePlaylist:', e);
+    toast('Ошибка удаления', true);
   }
 }
 
@@ -1341,7 +1375,7 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
-window.toggleLyrics=toggleLyrics; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
+window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
