@@ -354,7 +354,7 @@ function openPlaylistDetail(plId) {
 function sharePlaylist(plId) {
   if (!plId) plId = _currentPlId;
   if (!plId) return;
-  const url = location.origin + location.pathname + '?playlist=' + plId;
+  const url = location.origin + location.pathname + '?pl=' + plId;
   if (navigator.share) {
     navigator.share({ title: 'WAVARCHIVE — плейлист', url }).catch(() => {});
   } else {
@@ -872,6 +872,8 @@ function refreshLikeUI(id, liked) {
 function openCtxWithShare(trackId, btn) {
   if (!uid()) { openAuth(); return; }
   ctxTargetId = trackId;
+  const head = document.getElementById('ctx-head');
+  if (head) head.textContent = 'Действия';
   const pls   = myPlaylists();
   const items = document.getElementById('ctx-items');
   const shareBtn = `<div class="ctx-item" onclick="closeCtx();setTimeout(()=>shareTrack('${trackId}'),100)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Поделиться</div>`;
@@ -891,6 +893,8 @@ function openCtxWithShare(trackId, btn) {
 function openCtx(trackId, btn) {
   if (!uid()) { openAuth(); return; }
   ctxTargetId = trackId;
+  const head = document.getElementById('ctx-head');
+  if (head) head.textContent = 'Добавить в плейлист';
   const pls   = myPlaylists();
   const items = document.getElementById('ctx-items');
   const newBtn = `<div class="ctx-item" onclick="openCreatePl();closeCtx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новый плейлист</div>`;
@@ -1303,7 +1307,7 @@ function toggleLyrics() {
 
 // ── PUBLIC PLAYLIST BY URL ────────────────────────────────────────────────────
 function checkUrlPlaylist() {
-  const pid = new URLSearchParams(location.search).get('playlist');
+  const pid = new URLSearchParams(location.search).get('pl') || new URLSearchParams(location.search).get('playlist');
   if (!pid) return;
   import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').then(({getFirestore,doc,getDoc})=>{}).catch(()=>{});
   // Use already imported db
