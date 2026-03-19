@@ -32,14 +32,16 @@ try {
   const cred = await signInWithEmailAndPassword(auth, EMAIL, PASS);
   log('3. Auth OK, uid=' + cred.user.uid);
   
-  log('4. Writing to Firestore...');
-  await setDoc(doc(db, 'users', cred.user.uid), {
-    uid: cred.user.uid,
-    email: EMAIL,
-    test: true,
-    ts: Date.now()
-  });
-  log('5. setDoc OK!');
+log('4. Writing to Firestore...');
+const writePromise = setDoc(doc(db, 'users', cred.user.uid), {
+  uid: cred.user.uid,
+  email: EMAIL,
+  test: true,
+  ts: Date.now()
+});
+const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT after 10s')), 10000));
+await Promise.race([writePromise, timeout]);
+log('5. setDoc OK!');
   
   log('6. Reading back...');
   const snap = await getDoc(doc(db, 'users', cred.user.uid));
