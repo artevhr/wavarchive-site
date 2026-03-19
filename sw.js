@@ -1,5 +1,5 @@
-const CACHE = 'wavarchive-v1';
-const STATIC = ['/', '/index.html', '/style.css', '/app.js'];
+const CACHE = 'wavarchive-202603191547';
+const STATIC = ['/wavarchive-site/', '/wavarchive-site/index.html', '/wavarchive-site/style.css', '/wavarchive-site/app.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC).catch(()=>{})));
@@ -14,9 +14,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
   if(e.request.url.includes('firebasejs') || e.request.url.includes('googleapis')) return;
+  if(e.request.url.includes('tracks.json') || e.request.url.includes('raw.githubusercontent')) return;
   e.respondWith(
     fetch(e.request).then(r => {
-      if(r.ok && !e.request.url.includes('tracks.json')) {
+      if(r.ok) {
         const clone = r.clone();
         caches.open(CACHE).then(c => c.put(e.request, clone));
       }
