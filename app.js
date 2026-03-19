@@ -76,6 +76,13 @@ const genreEmoji  = g => ({'электронная':'🎛','хип-хоп':'🎤
 const coverUrl    = t => t.cover ? `${RAW}/${t.cover}` : null;
 const audioUrl    = t => t.file  ? `${RAW}/${t.file}`  : null;
 
+// Коллаборации — artist может быть строкой или массивом
+const getArtists  = t => Array.isArray(t.artist) ? t.artist : [t.artist];
+const artistStr   = t => getArtists(t).join(' & ');
+const artistLinks = (t, onclick='openArtistPage') => getArtists(t)
+  .map(a => `<span style="cursor:pointer" onclick="event.stopPropagation();${onclick}('${esc(a)}')">${esc(a)}</span>`)
+  .join(' <span style="color:var(--muted)">×</span> ');
+
 function toast(msg, err=false) {
   const a = document.getElementById('toast-area');
   const d = document.createElement('div');
@@ -101,11 +108,16 @@ async function loadTracks() {
     document.getElementById('catalog-list').innerHTML = empty;
   }
   renderPublic();
-  // если пользователь уже авторизован — рендерим приватные части
   if (currentUser) {
     renderLiked(); renderPlaylists(); renderProfile(); updateLikesBadge();
   }
   checkUrlTrack();
+  // Hide preloader
+  const pl = document.getElementById('preloader');
+  if (pl) {
+    setTimeout(() => pl.classList.add('hidden'), 300);
+    setTimeout(() => pl.remove(), 900);
+  }
 }
 
 // ── RENDER ALL ────────────────────────────────────────────────────────────────
@@ -158,7 +170,7 @@ function trackCard(t) {
   return `<div class="tcard${isNow?' now':''}" id="card-${t.id}" onclick="openTrack('${t.id}')">
     <div class="tcard-img">${img}<div class="tcard-overlay" onclick="event.stopPropagation();playById('${t.id}')"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></div></div>
     <div class="tcard-title">${esc(t.title)}</div>
-    <div class="tcard-artist" onclick="event.stopPropagation();openArtistPage('${esc(t.artist)}')">${esc(t.artist)}</div>
+    <div class="tcard-artist">${artistLinks(t)}</div>
     <div class="tcard-foot">
       <div class="tcard-acts" onclick="event.stopPropagation()">
         <button class="act-btn heart${liked?' on':''}" onclick="toggleLike('${t.id}')"><svg viewBox="0 0 24 24" fill="${liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
@@ -180,7 +192,7 @@ function trackRow(t, i) {
     <div class="trow-img">${img}</div>
     <div class="trow-info">
       <div class="trow-title">${esc(t.title)}</div>
-      <div class="trow-artist"><span onclick="event.stopPropagation();openArtistPage('${esc(t.artist)}')" style="cursor:pointer">${esc(t.artist)}</span> <span class="tag-genre">${esc(t.genre||'')}</span></div>
+      <div class="trow-artist">${artistLinks(t)} <span class="tag-genre">${esc(t.genre||'')}</span></div>
     </div>
     <div class="trow-right" onclick="event.stopPropagation()">
       <button class="act-btn heart${liked?' on':''}" onclick="toggleLike('${t.id}')"><svg viewBox="0 0 24 24" fill="${liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
@@ -460,7 +472,7 @@ function openTrack(id) {
   const liked = myLikes().includes(t.id);
   const img   = url ? `<img src="${esc(url)}" alt="">` : genreEmoji(t.genre);
   const plays = playsCache[t.id]?.count || 0;
-  const artistSpan = `<span style="cursor:pointer;text-decoration:underline;text-decoration-color:var(--border)" onclick="openArtistPage('${esc(t.artist)}')">${esc(t.artist)}</span>`;
+  const artistSpan = artistLinks(t);
   document.getElementById('track-body').innerHTML = `
     <div class="td-wrap">
       <div class="td-img">${img}</div>
@@ -500,7 +512,7 @@ function goBackFromTrack() { nav(prevPage); }
 function openArtistPage(name) {
   prevArtistPage = document.querySelector('.nav-link.active')?.dataset.p || 'home';
   const info = ARTISTS[name] || {};
-  const tks  = tracks.filter(t => t.artist === name);
+  const tks  = tracks.filter(t => getArtists(t).includes(name));
   const ini  = (name || '?')[0].toUpperCase();
   const avatarHtml = info.photo
     ? `<div class="artist-avatar"><img src="${esc(info.photo)}" alt=""></div>`
@@ -615,7 +627,7 @@ function updatePlayerUI(t) {
 
   // Mini player
   document.getElementById('pl-name').textContent = t.title;
-  document.getElementById('pl-by').textContent   = t.artist;
+  document.getElementById('pl-by').textContent = artistStr(t);
   const art = document.getElementById('pl-art');
   if (url) { art.innerHTML = `<img src="${esc(url)}"`+'>'; }
   else { art.innerHTML = genreEmoji(t.genre); art.style.fontSize = '18px'; }
@@ -625,24 +637,30 @@ function updatePlayerUI(t) {
   // Full player
   document.getElementById('fp-title').textContent = t.title;
   const fpArtist = document.getElementById('fp-artist');
-  fpArtist.textContent = t.artist;
-  fpArtist.style.cursor = 'pointer';
-  fpArtist.style.textDecoration = 'underline';
-  fpArtist.style.textDecorationColor = 'var(--border2)';
-  fpArtist.onclick = () => { closeFullPlayer(); openArtistPage(t.artist); };
+  const artists = getArtists(t);
+  if (artists.length === 1) {
+    fpArtist.textContent = artists[0];
+    fpArtist.style.cursor = 'pointer';
+    fpArtist.style.textDecorationColor = 'var(--border2)';
+    fpArtist.onclick = () => { closeFullPlayer(); openArtistPage(artists[0]); };
+  } else {
+    fpArtist.innerHTML = artistLinks(t, 'openArtistPage');
+    fpArtist.style.cursor = 'default';
+    fpArtist.onclick = null;
+  }
   const fpCover = document.getElementById('fp-cover');
   if (url) { fpCover.innerHTML = `<img src="${esc(url)}"`+'>'; }
   else { fpCover.innerHTML = genreEmoji(t.genre); fpCover.style.fontSize = '72px'; }
   document.getElementById('fp-heart').classList.toggle('on', liked);
   document.querySelector('#fp-heart svg')?.setAttribute('fill', liked ? 'currentColor' : 'none');
 
-  document.title = `${t.title} · ${t.artist} — WAVARCHIVE`;
+  document.title = `${t.title} · ${artistStr(t)} — WAVARCHIVE`;
   // Media Session — обложка на экране блокировки
   if ('mediaSession' in navigator) {
     const artwork = coverUrl(t);
     navigator.mediaSession.metadata = new MediaMetadata({
       title:  t.title,
-      artist: t.artist,
+      artist: artistStr(t),
       album:  'WAVARCHIVE',
       artwork: artwork ? [
         { src: artwork, sizes: '512x512', type: 'image/jpeg' }
@@ -1164,7 +1182,7 @@ function runMobSearch(q) {
       : '<div class="empty"><div class="empty-ico">😶</div><div class="empty-txt">Ничего не найдено</div></div>';
   } else {
     // Artists tab
-    const artistNames = [...new Set(tracks.map(t => t.artist))].filter(a => a.toLowerCase().includes(q));
+    const artistNames = [...new Set(tracks.flatMap(t => getArtists(t)))].filter(a => a.toLowerCase().includes(q));
     if (!artistNames.length) {
       el.innerHTML = '<div class="empty"><div class="empty-ico">😶</div><div class="empty-txt">Артисты не найдены</div></div>';
       return;
@@ -1208,7 +1226,7 @@ function renderArtistSearch() {
   if (!el) return;
   const q = searchQ.toLowerCase();
   if (!q) { el.style.display = 'none'; return; }
-  const names = [...new Set(tracks.map(t => t.artist))].filter(a => a.toLowerCase().includes(q));
+  const names = [...new Set(tracks.flatMap(t => getArtists(t)))].filter(a => a.toLowerCase().includes(q));
   if (!names.length) { el.style.display = 'none'; return; }
   el.style.display = '';
   el.innerHTML = `<div class="section-label" style="margin-bottom:12px">Артисты</div>` +
@@ -1277,7 +1295,7 @@ function getAlbums() {
     if (!t.album) return;
     if (!map[t.album]) map[t.album] = {
       name: t.album,
-      artist: t.artist,
+      artist: artistStr(t),
       cover: t.albumCover || t.cover || null,
       tracks: [],
       addedAt: t.addedAt || ''
@@ -1291,7 +1309,7 @@ function getAlbums() {
 }
 
 function renderArtistAlbums(artistName) {
-  const albums = getAlbums().filter(a => a.artist === artistName);
+  const albums = getAlbums().filter(a => getArtists({artist:a.artist}).includes(artistName));
   if (!albums.length) return '';
   return `<div class="section-label" style="margin-top:24px;margin-bottom:12px">Альбомы</div>
     <div class="albums-grid">${albums.map(a => albumCard(a)).join('')}</div>`;

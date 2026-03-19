@@ -630,3 +630,31 @@ textarea.form-input{resize:vertical;min-height:72px}
 .search-tab{font-family:var(--f-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 16px;border:1px solid var(--border);color:var(--muted2);cursor:pointer;transition:all .15s;background:transparent}
 .search-tab:hover{border-color:var(--border2);color:var(--text)}
 .search-tab.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}
+
+/* ── PRELOADER ── */
+.preloader{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+.preloader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.preloader-inner{display:flex;flex-direction:column;align-items:center;gap:28px}
+.preloader-logo{
+  font-family:var(--f-head);font-weight:800;font-size:32px;letter-spacing:-1px;
+  color:var(--text);
+}
+.preloader-logo em{color:var(--acc);font-style:normal}
+.preloader-bars{display:flex;align-items:flex-end;gap:5px;height:36px}
+.preloader-bar{
+  width:4px;background:var(--acc);border-radius:2px;
+  animation:bar-bounce .9s ease-in-out infinite;
+}
+.preloader-bar:nth-child(1){animation-delay:0s;height:16px}
+.preloader-bar:nth-child(2){animation-delay:.15s;height:24px}
+.preloader-bar:nth-child(3){animation-delay:.3s;height:36px}
+.preloader-bar:nth-child(4){animation-delay:.15s;height:24px}
+.preloader-bar:nth-child(5){animation-delay:0s;height:16px}
+@keyframes bar-bounce{
+  0%,100%{transform:scaleY(.4);opacity:.5}
+  50%{transform:scaleY(1);opacity:1}
+}
