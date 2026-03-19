@@ -45,11 +45,15 @@ const ARTISTS = {
   // "Овсянкин": {
   //   verified: true,
   //   bio: "Независимый артист.",
-  //   telegram: "@username",
-  //   instagram: "username",
-  //   vk: "username",
-  //   soundcloud: "username",
-  //   photo: "https://..."
+  //   photo: "avatars/ovsyankin.jpg",
+  //   links: [
+  //     { label: "Telegram", url: "https://t.me/username" },
+  //     { label: "VK", url: "https://vk.com/username" },
+  //     { label: "Instagram", url: "https://instagram.com/username" },
+  //     { label: "SoundCloud", url: "https://soundcloud.com/username" },
+  //     { label: "Boosty", url: "https://boosty.to/username" },
+  //     { label: "Сайт", url: "https://mysite.com" }
+  //   ]
   // }
 };
 
@@ -520,11 +524,9 @@ function openArtistPage(name) {
   const badge = info.verified
     ? `<span class="artist-badge"><svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Верифицирован</span>`
     : '';
-  const socials = [];
-  if (info.telegram)   socials.push(`<a href="https://t.me/${info.telegram.replace('@','')}" target="_blank" class="btn-social btn-tg-s"><svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>Telegram</a>`);
-  if (info.instagram)  socials.push(`<a href="https://instagram.com/${info.instagram}" target="_blank" class="btn-social btn-inst-s">Instagram</a>`);
-  if (info.vk)         socials.push(`<a href="https://vk.com/${info.vk}" target="_blank" class="btn-social btn-vk-s">VK</a>`);
-  if (info.soundcloud) socials.push(`<a href="https://soundcloud.com/${info.soundcloud}" target="_blank" class="btn-social btn-sc-s">SoundCloud</a>`);
+  const socials = (info.links || []).map(l =>
+    `<a href="${esc(l.url)}" target="_blank" rel="noopener" class="btn-social btn-custom">${esc(l.label)}</a>`
+  );
   document.getElementById('artist-body').innerHTML = `
     <div class="artist-header">
       ${avatarHtml}

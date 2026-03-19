@@ -612,6 +612,8 @@ textarea.form-input{resize:vertical;min-height:72px}
 .btn-inst-s{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
 .btn-vk-s{background:#4a76a8}
 .btn-sc-s{background:#ff5500}
+.btn-custom{background:var(--surf2);color:var(--text);border:1px solid var(--border2);}
+.btn-custom:hover{border-color:var(--acc);color:var(--acc);opacity:1}
 
 /* ── ACCENT COLOR TRANSITION ── */
 .pl-play,.fp-play,.mob-pl-play,.btn-auth.primary,.btn-prime,.g-btn.on,.sort-tab.active,.nav-badge,.mob-nav-badge{transition:background-color .5s ease,border-color .5s ease}
