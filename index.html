@@ -16,7 +16,6 @@
 <body>
 <div class="app" id="app">
 
-<!-- PRELOADER -->
 <div class="preloader" id="preloader">
   <div class="preloader-inner">
     <div class="preloader-logo">WAV<em>ARCHIVE</em></div>
@@ -30,7 +29,6 @@
   </div>
 </div>
 
-<!-- TOPBAR -->
 <header class="topbar">
   <div class="topbar-logo">
     <div class="logo-text"><span class="logo-full">WAV<em>ARCHIVE</em></span><span class="logo-short">W<em>A</em></span></div>
@@ -53,7 +51,6 @@
   </div>
 </header>
 
-<!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="nav-group">
     <div class="nav-group-label">Главное</div>
@@ -91,13 +88,12 @@
   </div>
 </nav>
 
-<!-- CONTENT -->
 <main class="content" id="content">
 
   <div class="page show" id="pg-home">
     <div class="hero">
-      <div class="hero-h">Музыка без<br>посредников.<br><em>Слушай.</em></div>
-      <div class="hero-p">Независимые треки от артистов через Telegram. Никаких лейблов.</div>
+      <div class="hero-h">Ваша<br>Музыка.<br><em>Слушай.</em></div>
+      <div class="hero-p">Треки от артистов через Telegram. Никаких лейблов.</div>
     </div>
     <div class="section-label">
       <div class="sort-tabs">
@@ -183,7 +179,6 @@
 
 </main>
 
-<!-- MINI PLAYER -->
 <div class="player" id="mini-player">
   <div class="pl-track" onclick="openFullPlayer()">
     <div class="pl-art" id="pl-art">🎵</div>
@@ -241,7 +236,6 @@
   </div>
 </div>
 
-<!-- FULL SCREEN PLAYER -->
 <div class="fullplayer" id="fullplayer">
   <div class="fp-header">
     <button class="fp-close" onclick="closeFullPlayer()">
@@ -293,7 +287,6 @@
   </div>
 </div>
 
-<!-- MOBILE NAV -->
 <nav class="mob-nav" id="mob-nav">
   <div class="mob-nav-btn active" data-p="home" onclick="nav('home')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -318,7 +311,6 @@
   </div>
 </nav>
 
-<!-- MOBILE SEARCH -->
 <div class="mob-search-overlay" id="mob-search-overlay">
   <div class="mob-search-top">
     <input class="mob-search-inp" id="mob-search-inp" type="search" placeholder="Поиск..." autocomplete="off">
@@ -333,9 +325,8 @@
   </div>
 </div>
 
-</div><!-- /app -->
+</div>
 
-<!-- AUTH MODAL -->
 <div class="modal-bg" id="m-auth">
   <div class="modal">
     <div class="modal-close" onclick="closeModal('m-auth')">×</div>
@@ -372,7 +363,6 @@
   </div>
 </div>
 
-<!-- CREATE PLAYLIST MODAL -->
 <div class="modal-bg" id="m-create-pl">
   <div class="modal">
     <div class="modal-close" onclick="closeModal('m-create-pl')">×</div>
@@ -392,7 +382,6 @@
   </div>
 </div>
 
-<!-- CONTEXT MENU -->
 <div class="ctx-menu" id="ctx-menu">
   <div class="ctx-head" id="ctx-head">Добавить в плейлист</div>
   <div id="ctx-items"></div>
