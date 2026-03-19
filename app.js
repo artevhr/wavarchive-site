@@ -489,6 +489,7 @@ function openArtistPage(name) {
         ${socials.length ? `<div class="artist-socials">${socials.join('')}</div>` : ''}
       </div>
     </div>
+    ${renderArtistAlbums(name)}
     ${tks.length
       ? `<div class="tlist">${tks.map((t,i) => trackRow(t,i)).join('')}</div>`
       : `<div class="empty"><div class="empty-ico">🎵</div><div class="empty-txt">Нет треков</div></div>`}`;
@@ -1146,6 +1147,103 @@ document.querySelectorAll('.modal-bg').forEach(bg => {
 document.getElementById('li-pass').addEventListener('keydown',  e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('reg-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
 
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem('wa_theme') || 'dark';
+  applyTheme(saved);
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('wa_theme', theme);
+  const dark  = document.getElementById('theme-icon-dark');
+  const light = document.getElementById('theme-icon-light');
+  if (dark)  dark.style.display  = theme === 'dark'  ? '' : 'none';
+  if (light) light.style.display = theme === 'light' ? '' : 'none';
+}
+function toggleTheme() {
+  const cur = localStorage.getItem('wa_theme') || 'dark';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+
+// ── ALBUMS ────────────────────────────────────────────────────────────────────
+let prevAlbumPage = 'home';
+
+function getAlbums() {
+  const map = {};
+  tracks.forEach(t => {
+    if (!t.album) return;
+    if (!map[t.album]) map[t.album] = {
+      name: t.album,
+      artist: t.artist,
+      cover: t.albumCover || t.cover || null,
+      tracks: [],
+      addedAt: t.addedAt || ''
+    };
+    map[t.album].tracks.push(t.id);
+    if (!map[t.album].cover && (t.albumCover || t.cover)) {
+      map[t.album].cover = t.albumCover || t.cover;
+    }
+  });
+  return Object.values(map);
+}
+
+function renderArtistAlbums(artistName) {
+  const albums = getAlbums().filter(a => a.artist === artistName);
+  if (!albums.length) return '';
+  return `<div class="section-label" style="margin-top:24px;margin-bottom:12px">Альбомы</div>
+    <div class="albums-grid">${albums.map(a => albumCard(a)).join('')}</div>`;
+}
+
+function albumCard(album) {
+  const url = album.cover ? `${RAW}/${album.cover}` : null;
+  const img = url ? `<img src="${esc(url)}" loading="lazy" alt="">` : '💿';
+  return `<div class="album-card" onclick="openAlbum('${esc(album.name)}')">
+    <div class="album-cover">${img}<div class="album-badge">${album.tracks.length} тр.</div></div>
+    <div class="album-title">${esc(album.name)}</div>
+    <div class="album-meta">${esc(album.artist)}</div>
+  </div>`;
+}
+
+function openAlbum(albumName) {
+  prevAlbumPage = document.querySelector('.nav-link.active')?.dataset.p || 'home';
+  const album = getAlbums().find(a => a.name === albumName);
+  if (!album) return;
+  const tks = album.tracks.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+  const url = album.cover ? `${RAW}/${album.cover}` : null;
+  const img = url ? `<img src="${esc(url)}" alt="">` : '💿';
+  const year = album.addedAt ? album.addedAt.slice(0,4) : '';
+  document.getElementById('album-body').innerHTML = `
+    <div class="album-header">
+      <div class="album-header-img">${img}</div>
+      <div>
+        <div class="album-header-title">${esc(album.name)}</div>
+        <div class="album-header-artist" onclick="openArtistPage('${esc(album.artist)}')">${esc(album.artist)}</div>
+        <div class="album-header-meta">${year ? year + ' · ' : ''}${tks.length} треков</div>
+        <button class="btn btn-prime" onclick="playAlbum('${esc(album.name)}')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21"/></svg>Слушать альбом
+        </button>
+      </div>
+    </div>
+    ${tks.length ? `<div class="tlist">${tks.map((t,i) => trackRow(t,i)).join('')}</div>` : ''}`;
+  nav('album');
+}
+
+function playAlbum(albumName) {
+  const album = getAlbums().find(a => a.name === albumName);
+  if (!album) return;
+  const tks = album.tracks.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+  if (!tks.length) return;
+  stopWave();
+  queueTracks = tks;
+  queueIdx = 0;
+  startPlay();
+  toast(`▶ ${albumName}`);
+}
+
+function goBackFromAlbum() { nav(prevAlbumPage); }
+
 // ── WINDOW EXPORTS (for onclick in HTML) ──────────────────────────────────────
 window.nav=nav; 
 // ── DOMINANT COLOR ────────────────────────────────────────────────────────────
@@ -1239,9 +1337,10 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
-window.toggleLyrics=toggleLyrics; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
+window.toggleLyrics=toggleLyrics; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+initTheme();
 renderAuthArea();
 loadTracks();
