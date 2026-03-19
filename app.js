@@ -461,8 +461,22 @@ function renderProfile() {
   el.innerHTML = `
     <div class="profile-head">
       <div class="profile-ava">${ini}</div>
-      <div>
-        <div class="profile-name">${esc(name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="profile-name" id="profile-name-display">${esc(name)}</div>
+          <button class="btn btn-ghost" style="font-size:9px;padding:3px 10px" onclick="toggleEditName()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Изменить
+          </button>
+        </div>
+        <div id="edit-name-form" style="display:none;margin-top:8px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input class="form-input" id="new-name-inp" type="text" placeholder="Новое имя" value="${esc(name)}" style="flex:1;min-width:140px;max-width:240px">
+            <button class="btn btn-prime" style="padding:8px 16px" onclick="saveNewName()">Сохранить</button>
+            <button class="btn btn-ghost" style="padding:8px 16px" onclick="toggleEditName()">Отмена</button>
+          </div>
+          <div id="edit-name-err" style="font-size:11px;color:var(--danger);margin-top:6px;display:none"></div>
+        </div>
         <div class="profile-email">${esc(currentUser.email)}</div>
         <div class="stat-row">
           <div><div class="stat-v">${userLikes.length}</div><div class="stat-l">Лайков</div></div>
@@ -471,6 +485,37 @@ function renderProfile() {
       </div>
     </div>
     <button class="btn btn-ghost" onclick="doLogout()">Выйти из аккаунта</button>`;
+}
+
+function toggleEditName() {
+  const form = document.getElementById('edit-name-form');
+  if (!form) return;
+  const visible = form.style.display !== 'none';
+  form.style.display = visible ? 'none' : 'block';
+  if (!visible) setTimeout(() => document.getElementById('new-name-inp')?.focus(), 50);
+}
+
+async function saveNewName() {
+  const inp = document.getElementById('new-name-inp');
+  const err = document.getElementById('edit-name-err');
+  if (!inp) return;
+  const newName = inp.value.trim();
+  if (!newName) { if(err){err.textContent='Введи имя';err.style.display='';} return; }
+  if (newName === currentUser.displayName) { toggleEditName(); return; }
+  const btn = document.querySelector('#edit-name-form .btn-prime');
+  if (btn) { btn.disabled=true; btn.textContent='Сохраняем...'; }
+  try {
+    await updateProfile(currentUser, { displayName: newName });
+    await updateDoc(doc(db, 'users', uid()), { name: newName }).catch(() =>
+      setDoc(doc(db, 'users', uid()), { name: newName }, { merge: true })
+    );
+    renderProfile();
+    renderAuthArea();
+    toast('✓ Имя обновлено');
+  } catch(e) {
+    if(err){err.textContent='Ошибка: '+e.message;err.style.display='';}
+    if(btn){btn.disabled=false;btn.textContent='Сохранить';}
+  }
 }
 
 // ── TRACK DETAIL PAGE ─────────────────────────────────────────────────────────
@@ -1482,7 +1527,7 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
-window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.setSearchTab=setSearchTab; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
+window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.saveNewName=saveNewName; window.toggleEditName=toggleEditName; window.setSearchTab=setSearchTab; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
