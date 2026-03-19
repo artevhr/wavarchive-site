@@ -1143,17 +1143,54 @@ function closeMobSearch() {
 }
 
 let mobST;
-document.getElementById('mob-search-inp').addEventListener('input', e => {
-  clearTimeout(mobST);
-  mobST = setTimeout(() => {
-    const q  = e.target.value.trim().toLowerCase();
-    const el = document.getElementById('mob-search-results');
-    if (!q) { el.innerHTML = '<div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Начни вводить</div></div>'; return; }
+let _searchTab = 'tracks';
+function setSearchTab(tab) {
+  _searchTab = tab;
+  document.querySelectorAll('.search-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const q = document.getElementById('mob-search-inp').value.trim().toLowerCase();
+  if (q) runMobSearch(q);
+}
+
+function runMobSearch(q) {
+  const el = document.getElementById('mob-search-results');
+  if (!q) {
+    el.innerHTML = '<div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Начни вводить</div></div>';
+    return;
+  }
+  if (_searchTab === 'tracks') {
     const res = tracks.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q));
     el.innerHTML = res.length
       ? res.map((t,i) => trackRow(t,i)).join('')
       : '<div class="empty"><div class="empty-ico">😶</div><div class="empty-txt">Ничего не найдено</div></div>';
-  }, 200);
+  } else {
+    // Artists tab
+    const artistNames = [...new Set(tracks.map(t => t.artist))].filter(a => a.toLowerCase().includes(q));
+    if (!artistNames.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-ico">😶</div><div class="empty-txt">Артисты не найдены</div></div>';
+      return;
+    }
+    el.innerHTML = artistNames.map(name => {
+      const info = ARTISTS[name] || {};
+      const tks = tracks.filter(t => t.artist === name);
+      const ini = (name || '?')[0].toUpperCase();
+      const av = info.photo
+        ? `<img src="${RAW}/${info.photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`
+        : `<div style="width:40px;height:40px;border-radius:50%;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-family:var(--f-head);font-weight:800;color:var(--acc);font-size:16px;flex-shrink:0">${ini}</div>`;
+      const badge = info.verified ? ' ✓' : '';
+      return `<div class="trow" onclick="openArtistPage('${esc(name)}');closeMobSearch()" style="grid-template-columns:56px 1fr">
+        <div class="trow-img" style="width:56px;height:56px;padding:8px;border:none">${av}</div>
+        <div class="trow-info">
+          <div class="trow-title">${esc(name)}${badge}</div>
+          <div class="trow-artist" style="color:var(--muted2)">${tks.length} треков</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+document.getElementById('mob-search-inp').addEventListener('input', e => {
+  clearTimeout(mobST);
+  mobST = setTimeout(() => runMobSearch(e.target.value.trim().toLowerCase()), 200);
 });
 
 let searchST;
@@ -1161,10 +1198,36 @@ document.getElementById('search-inp').addEventListener('input', e => {
   clearTimeout(searchST);
   searchST = setTimeout(() => {
     searchQ = e.target.value.trim();
-    if (searchQ) nav('catalog');
-    renderCatalogList();
+    if (searchQ) { nav('catalog'); renderCatalogList(); renderArtistSearch(); }
+    else renderCatalogList();
   }, 200);
 });
+
+function renderArtistSearch() {
+  const el = document.getElementById('artist-search-results');
+  if (!el) return;
+  const q = searchQ.toLowerCase();
+  if (!q) { el.style.display = 'none'; return; }
+  const names = [...new Set(tracks.map(t => t.artist))].filter(a => a.toLowerCase().includes(q));
+  if (!names.length) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = `<div class="section-label" style="margin-bottom:12px">Артисты</div>` +
+    names.map(name => {
+      const info = ARTISTS[name] || {};
+      const tks = tracks.filter(t => t.artist === name);
+      const ini = (name || '?')[0].toUpperCase();
+      const av = info.photo
+        ? `<img src="${RAW}/${info.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`
+        : `<div style="width:44px;height:44px;border-radius:50%;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-family:var(--f-head);font-weight:800;color:var(--acc);font-size:18px;flex-shrink:0">${ini}</div>`;
+      return `<div class="trow" onclick="openArtistPage('${esc(name)}')" style="grid-template-columns:52px 1fr">
+        <div class="trow-img" style="width:52px;height:52px;padding:4px;border:none">${av}</div>
+        <div class="trow-info">
+          <div class="trow-title">${esc(name)}${info.verified?' ✓':''}</div>
+          <div class="trow-artist">${tks.length} треков</div>
+        </div>
+      </div>`;
+    }).join('');
+}
 
 // ── KEYBOARD ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
@@ -1375,7 +1438,7 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
-window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
+window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.setSearchTab=setSearchTab; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────

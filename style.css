@@ -624,3 +624,9 @@ textarea.form-input{resize:vertical;min-height:72px}
   .album-header-img{max-width:180px;margin:0 auto;}
   .albums-grid{grid-template-columns:repeat(2,1fr);}
 }
+
+/* ── SEARCH TABS ── */
+.search-tabs-row{display:flex;gap:4px;padding:8px 0;flex-shrink:0}
+.search-tab{font-family:var(--f-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 16px;border:1px solid var(--border);color:var(--muted2);cursor:pointer;transition:all .15s;background:transparent}
+.search-tab:hover{border-color:var(--border2);color:var(--text)}
+.search-tab.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}

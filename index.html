@@ -102,6 +102,7 @@
   <div class="page" id="pg-catalog">
     <div class="pg-title">Каталог <span class="pg-title-count" id="catalog-cnt"></span></div>
     <div class="genre-bar" id="gb-catalog"></div>
+    <div id="artist-search-results" class="tlist" style="display:none;margin-bottom:8px"></div>
     <div class="tlist" id="catalog-list"></div>
     <div id="catalog-more"></div>
   </div>
@@ -308,6 +309,10 @@
   <div class="mob-search-top">
     <input class="mob-search-inp" id="mob-search-inp" type="search" placeholder="Поиск..." autocomplete="off">
     <div class="mob-search-cancel" onclick="closeMobSearch()">Отмена</div>
+  </div>
+  <div class="search-tabs-row">
+    <button class="search-tab active" data-tab="tracks" onclick="setSearchTab('tracks')">Треки</button>
+    <button class="search-tab" data-tab="artists" onclick="setSearchTab('artists')">Артисты</button>
   </div>
   <div class="mob-search-results tlist" id="mob-search-results">
     <div class="empty"><div class="empty-ico">🔍</div><div class="empty-txt">Начни вводить</div></div>
