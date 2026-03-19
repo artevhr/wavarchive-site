@@ -192,7 +192,12 @@ function trackRow(t, i) {
   const isNow = queueTracks[queueIdx]?.id === t.id;
   const img   = url ? `<img src="${esc(url)}" loading="lazy" alt="">` : genreEmoji(t.genre);
   return `<div class="trow${isNow?' now':''}" id="row-${t.id}" onclick="playById('${t.id}')">
-    <div class="trow-n">${isNow ? '▶' : i+1}</div>
+    <div class="trow-n">
+      ${isNow
+        ? '<span style="color:var(--acc)">▶</span>'
+        : `<span class="trow-num">${i+1}</span><span class="trow-play-ico"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></span>`
+      }
+    </div>
     <div class="trow-img">${img}</div>
     <div class="trow-info">
       <div class="trow-title">${esc(t.title)}</div>
@@ -1385,9 +1390,26 @@ function extractDominantColor(src) {
         r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++;
       }
       if (!n || Math.max(r/n,g/n,b/n)-Math.min(r/n,g/n,b/n)<30) { resetAccent(); return; }
+      const R=Math.round(r/n), G=Math.round(g/n), B=Math.round(b/n);
       const root = document.documentElement;
-      root.style.setProperty('--acc', `rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`);
-      root.style.setProperty('--acc2', `rgb(${Math.min(255,Math.round(r/n)+40)},${Math.min(255,Math.round(g/n)+40)},${Math.min(255,Math.round(b/n)+40)})`);
+      root.style.setProperty('--acc',  `rgb(${R},${G},${B})`);
+      root.style.setProperty('--acc2', `rgb(${Math.min(255,R+40)},${Math.min(255,G+40)},${Math.min(255,B+40)})`);
+      // Full player gradient
+      const fp = document.getElementById('fullplayer');
+      if (fp) {
+        fp.style.setProperty('--fp-grad',
+          `radial-gradient(ellipse at 50% 0%, rgba(${R},${G},${B},0.55) 0%, rgba(${R},${G},${B},0.15) 45%, transparent 70%)`
+        );
+        fp.style.background = `var(--bg)`;
+        const before = fp.querySelector('.fp-grad-layer') || (() => {
+          const el = document.createElement('div');
+          el.className = 'fp-grad-layer';
+          el.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:0;transition:background .8s ease';
+          fp.insertBefore(el, fp.firstChild);
+          return el;
+        })();
+        before.style.background = `radial-gradient(ellipse at 50% 0%, rgba(${R},${G},${B},0.55) 0%, rgba(${R},${G},${B},0.12) 50%, transparent 75%)`;
+      }
     } catch { resetAccent(); }
   };
   img.onerror = resetAccent;
@@ -1396,6 +1418,8 @@ function extractDominantColor(src) {
 function resetAccent() {
   document.documentElement.style.setProperty('--acc','#ff5e1a');
   document.documentElement.style.setProperty('--acc2','#ff8c5a');
+  const layer = document.querySelector('.fp-grad-layer');
+  if (layer) layer.style.background = 'none';
 }
 
 // ── LYRICS ────────────────────────────────────────────────────────────────────
