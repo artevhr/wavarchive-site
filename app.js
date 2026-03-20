@@ -638,9 +638,65 @@ function copyShareUrl() {}
 function nativeShare() {}
 
 function checkUrlTrack() {
-  const p = new URLSearchParams(location.search);
+  const p   = new URLSearchParams(location.search);
   const tid = p.get('track');
-  if (tid) { const t = tracks.find(x => x.id === tid); if (t) openTrack(tid); }
+  if (tid) {
+    const t = tracks.find(x => x.id === tid);
+    if (t) {
+      openTrack(tid);
+    } else {
+      // Track not found — show 404
+      document.getElementById('track-body').innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:32px;text-align:center;position:relative;overflow:hidden">
+          <canvas id="c404" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35"></canvas>
+          <div style="position:relative;z-index:1">
+            <div style="font-family:var(--f-head);font-size:clamp(80px,18vw,160px);font-weight:800;letter-spacing:-8px;line-height:1;background:linear-gradient(135deg,var(--acc),var(--acc2),var(--border2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:pulse404 2s ease-in-out infinite">404</div>
+            <button class="btn btn-ghost" style="margin-top:32px" onclick="nav('home')">← На главную</button>
+          </div>
+        </div>
+        <style>
+          @keyframes pulse404{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+        </style>`;
+      // Animated waveform on canvas
+      setTimeout(() => {
+        const canvas = document.getElementById('c404');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w, h, t = 0;
+        const resize = () => { w = canvas.width = canvas.offsetWidth; h = canvas.height = canvas.offsetHeight; };
+        resize();
+        window.addEventListener('resize', resize);
+        const waves = [
+          { freq: .018, amp: .18, speed: .022, phase: 0,    color: 'var(--acc)' },
+          { freq: .012, amp: .12, speed: .014, phase: 2.1,  color: 'var(--acc2)' },
+          { freq: .024, amp: .08, speed: .031, phase: 4.3,  color: 'var(--border2)' },
+          { freq: .009, amp: .22, speed: .009, phase: 1.5,  color: 'var(--acc)' },
+        ];
+        const getColor = v => getComputedStyle(document.documentElement).getPropertyValue(v.replace('var(','').replace(')',''));
+        function draw() {
+          if (!document.getElementById('c404')) return;
+          ctx.clearRect(0, 0, w, h);
+          waves.forEach(wave => {
+            ctx.beginPath();
+            ctx.strokeStyle = getColor(wave.color) || '#ff5e1a';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = .6;
+            for (let x = 0; x <= w; x += 2) {
+              const y = h/2 + Math.sin(x * wave.freq + t * wave.speed + wave.phase) * h * wave.amp
+                            + Math.sin(x * wave.freq * 2.3 + t * wave.speed * 1.7) * h * wave.amp * .3;
+              x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          });
+          t++;
+          requestAnimationFrame(draw);
+        }
+        draw();
+      }, 50);
+      prevPage = 'home';
+      nav('track');
+    }
+  }
   checkUrlPlaylist();
 }
 
