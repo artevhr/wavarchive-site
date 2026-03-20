@@ -41,6 +41,14 @@ const RECENT_KEY = 'wa_recent';
 
 // Данные артистов — добавляй сюда
 const ARTISTS = {
+     "Д Д Д": {
+     verified: true,
+     bio: "девять два девять",
+     photo: "avatars/DDd.png",
+     links: [
+       { label: "плейлист", url: "https://t.me/plst_music" },
+     ]
+   }
   // Пример:
   // "Овсянкин": {
   //   verified: true,
