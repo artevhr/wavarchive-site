@@ -383,7 +383,7 @@ function openPlaylistDetail(plId) {
     <div class="pg-title">${esc(pl.name)}</div>
     ${pl.desc ? `<p style="font-size:12px;color:var(--muted2);margin-bottom:20px;line-height:1.8">${esc(pl.desc)}</p>` : ''}
     ${tks.length
-      ? `<div class="tlist">${tks.map((t,i) => trackRow(t,i)).join('')}</div>`
+      ? `<div class="tlist">${tks.map((t,i) => trackRowPlaylist(t,i,plId)).join('')}</div>`
       : `<div class="empty"><div class="empty-ico">🎵</div><div class="empty-txt">Плейлист пустой</div></div>`}`;
   const shareBtn = document.getElementById('btn-share-pl');
   if (shareBtn) shareBtn.style.display = '';
