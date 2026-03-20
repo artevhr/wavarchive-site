@@ -40,14 +40,6 @@ const RECENT_KEY = 'wa_recent';
 
 // Данные артистов — добавляй сюда
 const ARTISTS = {
-   "Д Д Д": {
-     verified: true,
-     bio: "девять два девять",
-     photo: "avatars/DDd.png",
-     links: [
-       { label: "плейлист", url: "https://t.me/plst_music" },
-     ]
-   }
   // Пример:
   // "Овсянкин": {
   //   verified: true,
@@ -196,7 +188,7 @@ function trackCard(t) {
 function trackRowPlaylist(t, i, plId) {
   const url = coverUrl(t), lk = myLikes().includes(t.id), isNow = queueTracks[queueIdx]?.id === t.id;
   const img = url ? `<img src="${esc(url)}" loading="lazy" alt="">` : genreEmoji(t.genre);
-  return `<div class="trow${isNow?' now':''}" id="row-${t.id}" onclick="playById('${t.id}')">
+  return `<div class="trow${isNow?' now':''}" id="row-${t.id}" onclick="playById('${t.id}','playlist')">
     <div class="trow-n">
       ${isNow ? `<span style="color:var(--acc)">▶</span>` : `<span class="trow-num">${i+1}</span><span class="trow-play-ico"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></span>`}
     </div>
@@ -397,6 +389,7 @@ function openPlaylistDetail(plId) {
   if (shareBtn) shareBtn.style.display = '';
   const delBtn = document.getElementById('btn-delete-pl');
   if (delBtn) delBtn.style.display = '';
+  _playContext = 'playlist';
   prevPage = 'playlists';
   nav('pl-detail');
 }
@@ -662,12 +655,30 @@ function incrementPlays(id) {
 }
 
 // ── PLAYER ────────────────────────────────────────────────────────────────────
-function playById(id) {
+let _playContext = null; // 'playlist', 'catalog', null = all
+
+function playById(id, context) {
   const t = tracks.find(x => x.id === id);
   if (!t) return;
   stopWave();
-  queueTracks = [...tracks];
-  queueIdx    = queueTracks.findIndex(x => x.id === id);
+
+  if (context === 'playlist' && _currentPlId) {
+    // Play from playlist — queue = playlist tracks
+    const pl = userPlaylists.find(p => p.id === _currentPlId);
+    if (pl) {
+      const plTracks = pl.tracks.map(tid => tracks.find(x => x.id === tid)).filter(Boolean);
+      _playContext = 'playlist';
+      queueTracks  = plTracks;
+      queueIdx     = queueTracks.findIndex(x => x.id === id);
+      startPlay();
+      return;
+    }
+  }
+
+  // Play from anywhere else — queue = all tracks, reset context
+  _playContext = null;
+  queueTracks  = [...tracks];
+  queueIdx     = queueTracks.findIndex(x => x.id === id);
   startPlay();
 }
 
