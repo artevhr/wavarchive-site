@@ -1418,8 +1418,24 @@ function goBackFromAlbum() { nav(prevAlbumPage); }
 // ── WINDOW EXPORTS (for onclick in HTML) ──────────────────────────────────────
 window.nav=nav; 
 // ── DOMINANT COLOR ────────────────────────────────────────────────────────────
+function setFpGradient(R, G, B) {
+  const fp = document.getElementById('fullplayer');
+  if (!fp) return;
+  let layer = fp.querySelector('.fp-grad-layer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.className = 'fp-grad-layer';
+    layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:0;transition:background .8s ease';
+    fp.insertBefore(layer, fp.firstChild);
+  }
+  layer.style.background = `radial-gradient(ellipse at 50% 0%, rgba(${R},${G},${B},0.6) 0%, rgba(${R},${G},${B},0.15) 45%, transparent 72%)`;
+}
+
 function extractDominantColor(src) {
-  if (!src) { resetAccent(); return; }
+  // Always show orange gradient immediately as fallback
+  setFpGradient(255, 94, 26);
+  if (!src) return;
+
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
@@ -1434,37 +1450,22 @@ function extractDominantColor(src) {
         if (d[i+3]<128) continue;
         r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++;
       }
-      if (!n || Math.max(r/n,g/n,b/n)-Math.min(r/n,g/n,b/n)<30) { resetAccent(); return; }
+      if (!n || Math.max(r/n,g/n,b/n)-Math.min(r/n,g/n,b/n)<30) return;
       const R=Math.round(r/n), G=Math.round(g/n), B=Math.round(b/n);
-      const root = document.documentElement;
-      root.style.setProperty('--acc',  `rgb(${R},${G},${B})`);
-      root.style.setProperty('--acc2', `rgb(${Math.min(255,R+40)},${Math.min(255,G+40)},${Math.min(255,B+40)})`);
-      // Full player gradient
-      const fp = document.getElementById('fullplayer');
-      if (fp) {
-        fp.style.setProperty('--fp-grad',
-          `radial-gradient(ellipse at 50% 0%, rgba(${R},${G},${B},0.55) 0%, rgba(${R},${G},${B},0.15) 45%, transparent 70%)`
-        );
-        fp.style.background = `var(--bg)`;
-        const before = fp.querySelector('.fp-grad-layer') || (() => {
-          const el = document.createElement('div');
-          el.className = 'fp-grad-layer';
-          el.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:0;transition:background .8s ease';
-          fp.insertBefore(el, fp.firstChild);
-          return el;
-        })();
-        before.style.background = `radial-gradient(ellipse at 50% 0%, rgba(${R},${G},${B},0.55) 0%, rgba(${R},${G},${B},0.12) 50%, transparent 75%)`;
-      }
-    } catch { resetAccent(); }
+      document.documentElement.style.setProperty('--acc',  `rgb(${R},${G},${B})`);
+      document.documentElement.style.setProperty('--acc2', `rgb(${Math.min(255,R+40)},${Math.min(255,G+40)},${Math.min(255,B+40)})`);
+      setFpGradient(R, G, B);
+    } catch {}
   };
-  img.onerror = resetAccent;
+  // On CORS error — keep orange gradient
+  img.onerror = () => {};
   img.src = src;
 }
+
 function resetAccent() {
   document.documentElement.style.setProperty('--acc','#ff5e1a');
   document.documentElement.style.setProperty('--acc2','#ff8c5a');
-  const layer = document.querySelector('.fp-grad-layer');
-  if (layer) layer.style.background = 'none';
+  setFpGradient(255, 94, 26);
 }
 
 // ── LYRICS ────────────────────────────────────────────────────────────────────
