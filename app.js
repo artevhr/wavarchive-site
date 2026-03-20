@@ -1,4 +1,3 @@
-
 // TEMP DEBUG
 function showErr(msg) {
   let el = document.getElementById('_ferr');
@@ -41,14 +40,6 @@ const RECENT_KEY = 'wa_recent';
 
 // Данные артистов — добавляй сюда
 const ARTISTS = {
-     "Д Д Д": {
-     verified: true,
-     bio: "девять два девять",
-     photo: "avatars/DDd.png",
-     links: [
-       { label: "плейлист", url: "https://t.me/plst_music" },
-     ]
-   }
   // Пример:
   // "Овсянкин": {
   //   verified: true,
@@ -194,6 +185,26 @@ function trackCard(t) {
 }
 
 // ── TRACK ROW ─────────────────────────────────────────────────────────────────
+function trackRowPlaylist(t, i, plId) {
+  const url = coverUrl(t), lk = myLikes().includes(t.id), isNow = queueTracks[queueIdx]?.id === t.id;
+  const img = url ? `<img src="${esc(url)}" loading="lazy" alt="">` : genreEmoji(t.genre);
+  return `<div class="trow${isNow?' now':''}" id="row-${t.id}" onclick="playById('${t.id}')">
+    <div class="trow-n">
+      ${isNow ? `<span style="color:var(--acc)">▶</span>` : `<span class="trow-num">${i+1}</span><span class="trow-play-ico"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></span>`}
+    </div>
+    <div class="trow-img">${img}</div>
+    <div class="trow-info">
+      <div class="trow-title">${esc(t.title)}</div>
+      <div class="trow-artist">${artistLinks(t)} <span class="tag-genre">${esc(t.genre||'')}</span></div>
+    </div>
+    <div class="trow-right" onclick="event.stopPropagation()">
+      <button class="act-btn heart${lk?' on':''}" onclick="toggleLike('${t.id}')"><svg viewBox="0 0 24 24" fill="${lk?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
+      <button class="act-btn" style="color:var(--muted)" title="Удалить из плейлиста" onclick="removeFromPlaylist('${plId}','${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <span class="trow-dur">${fmt(t.duration)}</span>
+    </div>
+  </div>`;
+}
+
 function trackRow(t, i) {
   const url   = coverUrl(t);
   const liked = myLikes().includes(t.id);
@@ -1024,6 +1035,22 @@ function openCtx(trackId, btn) {
 
 function closeCtx() { document.getElementById('ctx-menu').classList.remove('open'); }
 
+async function removeFromPlaylist(plId, trackId) {
+  const pl = userPlaylists.find(p => p.id === plId);
+  if (!pl) return;
+  pl.tracks = pl.tracks.filter(id => id !== trackId);
+  updateDoc(doc(db, 'playlists', plId), { tracks: arrayRemove(trackId) })
+    .catch(e => console.error('removeFromPlaylist:', e));
+  try {
+    const cache = JSON.parse(localStorage.getItem('wa_udata_' + uid()) || '{}');
+    cache.playlists = userPlaylists;
+    localStorage.setItem('wa_udata_' + uid(), JSON.stringify(cache));
+  } catch {}
+  renderPlaylists();
+  openPlaylistDetail(plId);
+  toast('Трек удалён из плейлиста');
+}
+
 async function addToPlaylist(plId) {
   closeCtx();
   const pl = userPlaylists.find(p => p.id === plId);
@@ -1536,7 +1563,7 @@ window.openMobSearch=openMobSearch; window.closeMobSearch=closeMobSearch;
 window.startWave=startWave; window.shareTrack=shareTrack;
 window.openFullPlayer=openFullPlayer;
 window.copyShareUrl=copyShareUrl;window.nativeShare=nativeShare; window.closeFullPlayer=closeFullPlayer;
-window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.saveNewName=saveNewName; window.toggleEditName=toggleEditName; window.setSearchTab=setSearchTab; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
+window.toggleLyrics=toggleLyrics; window.deletePlaylist=deletePlaylist; window.removeFromPlaylist=removeFromPlaylist; window.saveNewName=saveNewName; window.toggleEditName=toggleEditName; window.setSearchTab=setSearchTab; window.toggleTheme=toggleTheme; window.openAlbum=openAlbum; window.playAlbum=playAlbum; window.goBackFromAlbum=goBackFromAlbum; window.loadMoreCatalog=loadMoreCatalog; window.sharePlaylist=sharePlaylist; window.openCtxPlayer=openCtxPlayer;
 window.openCtxPlayer=openCtxPlayer;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
